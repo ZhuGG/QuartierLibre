@@ -1,12 +1,12 @@
 # Quartier Libre — Soleil / Lune
 
-Réécriture de [Neversmoonsun](https://github.com/ZhuGG/Neversmoonsun) pour les sorties à **Lyon 7e**. Deux identités de bornes d’arcade, une seule affichée après le choix initial. Interface française en pixel art, roue Three.js réellement modélisée, boutons physiques, écran CRT et ticket de sortie.
+Jeu d’arcade pour choisir ses sorties à **Lyon 7e**. Deux identités de bornes, une seule affichée après le choix initial. Interface française en pixel art, roue Three.js réellement modélisée, commandes mécaniques, écran CRT et ticket de sortie.
 
 ## Lancer
 
-Version en ligne : https://zhugg.github.io/Neversmoonsun/
+Version en ligne : https://zhugg.github.io/QuartierLibre/
 
-Le workflow `.github/workflows/deploy-pages.yml` vérifie les règles, compile puis déploie `dist/` à chaque envoi sur `main`. Le build GitHub utilise `GITHUB_PAGES=true` pour servir correctement les fichiers sous `/Neversmoonsun/`. Les builds locaux conservent leur chemin racine. L’ancienne version est conservée dans l’historique Git et `legacy-original.html`.
+Le workflow `.github/workflows/deploy-pages.yml` vérifie les règles, compile puis déploie `dist/` à chaque envoi sur `main`. Le build GitHub utilise `GITHUB_PAGES=true` et le nom du dépôt fourni par `GITHUB_REPOSITORY` pour servir correctement les fichiers sous `/QuartierLibre/`. Les builds locaux conservent leur chemin racine.
 
 Node.js 22.12+ ou 24+ et npm. Double-cliquer `Lancer-Quartier-Libre.cmd`, ou :
 
@@ -44,9 +44,8 @@ Les sources ont été consultées le 17 novembre 2026. Le détail des liens est 
 - `public/assets/arcade-abstract-v1.png` : fond abstrait pixel art généré avec le mode intégré imagegen.
 - `public/assets/fonts/` : Press Start 2P, licence SIL OFL incluse.
 - `docs/arcade-abstract-asset.md` : prompt du décor intégré. Les anciens décors et leurs prompts sont conservés comme références.
-- `legacy-original.html` et `assets/` : version historique et ses assets, conservés pour référence ; non utilisés dans la nouvelle application.
 
-Three.js est sous licence MIT. Le code et les assets du dépôt historique restent soumis à leurs droits d’origine ; aucune nouvelle licence n’est présumée pour eux.
+Three.js est sous licence MIT. Press Start 2P est sous licence SIL OFL, incluse avec la police.
 
 ## État des dépendances
 

@@ -515,7 +515,7 @@ $("#help").onclick = () =>
 $("#sources").onclick = () =>
   info(
     "À PROPOS & SOURCES",
-    `<p>Quartier Libre réinterprète le principe Soleil / Lune de <a href="https://github.com/ZhuGG/Neversmoonsun" target="_blank" rel="noopener noreferrer">Neversmoonsun</a>. Réécriture complète avec Three.js.</p><p>Cette première sélection couvre Lyon 7e. Elle n’est pas exhaustive. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources consultées le 17 novembre 2026 :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a>${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
+    `<p>Quartier Libre propose des sorties à Lyon 7e, avec une borne pour la journée et une borne pour la soirée.</p><p>Cette première sélection couvre Lyon 7e. Elle n’est pas exhaustive. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources consultées le 17 novembre 2026 :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a>${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
   );
 $("#close-info").onclick = () => $("#info").close();
 for (const d of $$("dialog"))
