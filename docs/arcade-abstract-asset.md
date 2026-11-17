@@ -1,0 +1,9 @@
+# Fond abstrait arcade
+
+Fichier intégré : `public/assets/arcade-abstract-v1.png`.
+
+Généré avec l’outil imagegen intégré. Cet asset remplace le décor urbain dans le fond, les cartes de choix et la sérigraphie de la borne. Les essais précédents restent conservés comme références. Les textes, commandes et lumières de la machine sont construits en CSS et Three.js, pas incrustés dans l’image.
+
+## Prompt final
+
+Use case: stylized-concept. Production background for a sophisticated original pixel-art arcade game, wide 1536x1024. Abstract architectural composition inspired by early 1980s arcade cabinet screenprints, modular geometric sculpture and pixel demoscene graphics. Large stepped concentric arcs and offset rectangular slabs around the far left and far right edges, a few small square inset light panels, precise thin circuit-like channels, low tiled foreground in perspective. Quiet spacious very dark petrol central 60 percent to place an interactive machine, no central focal object. Left peripheral structures use weathered amber and pale ochre, right peripheral structures muted icy blue and slate, dark ink ground. Rich deliberately placed square pixel clusters at logical resolution 480x320, restrained ordered dithering, crisp staircase geometry, tactile screenprint grain rendered in pixels, 16-color palette: midnight petrol #10212d, ink #101722, desaturated blue #36536c, amber #dba757, ivory #d4ccb0, sage #7e9b91. Mature graphic composition, strong negative space, unusual asymmetric geometry, subtle physical light falloff translated into dithered pixels. Not a city, not a room illustration, not a landscape, no lettering, no text, no characters, no mascots, no logos, no purple-pink neon, no rainbow gradients, no stars scattered everywhere, no smooth digital painting, no UI mockup.

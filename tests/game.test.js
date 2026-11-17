@@ -7,6 +7,7 @@ import {
   targetRotation,
   makeWheelPool,
   spinProgress,
+  renewWheelPool,
 } from "../src/data.js";
 test("le lieu choisi termine exactement sous le pointeur pour toutes les tailles de roue", () => {
   const tau = Math.PI * 2;
@@ -18,6 +19,31 @@ test("le lieu choisi termine exactement sous le pointeur pour toutes les tailles
         const a = (((end + ((i + 0.5) * tau) / n) % tau) + tau) % tau;
         assert.ok(Math.abs(a - Math.PI / 2) < 1e-10);
       }
+});
+
+test("renouveler privilégie six autres lieux et conserve les exclusions", () => {
+  const list = Array.from({ length: 14 }, (_, i) => ({
+    id: `place-${i}`,
+    available: i !== 13,
+  }));
+  const current = list.slice(0, 6);
+  const renewed = renewWheelPool(list, ["place-12"], current, () => 0.99);
+  assert.equal(renewed.length, 6);
+  assert.equal(new Set(renewed.map((p) => p.id)).size, 6);
+  assert.ok(renewed.every((p) => !current.some((old) => old.id === p.id)));
+  assert.ok(renewed.every((p) => p.id !== "place-12" && p.available !== false));
+});
+test("une petite sélection reste utilisable sans promettre des lieux inexistants", () => {
+  const list = Array.from({ length: 6 }, (_, i) => ({ id: `place-${i}` }));
+  const renewed = renewWheelPool(list, [], list, () => 0.999);
+  assert.equal(renewed.length, 6);
+  assert.notDeepEqual(
+    renewed.map((p) => p.id),
+    list.map((p) => p.id),
+  );
+  assert.deepEqual(renewWheelPool([], [], []), []);
+  assert.equal(renewWheelPool(list.slice(0, 1), [], []).length, 1);
+  assert.ok(!places.some((p) => p.id === "ours"));
 });
 test("les filtres combinent mode, quartier, recherche accentuée et favoris", () => {
   assert.equal(

@@ -69,7 +69,7 @@ button[aria-disabled="true"] {
 .room {
   position: fixed;
   inset: 0;
-  background: #182a32 url("/assets/arcade-room.png") center center/cover
+  background: #182a32 url("/assets/guillotiere.png") center center/cover
     no-repeat;
   image-rendering: pixelated;
   z-index: -3;

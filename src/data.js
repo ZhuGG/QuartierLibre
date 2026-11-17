@@ -239,20 +239,6 @@ export const places = [
     color: "#a3b687",
   },
   {
-    id: "ours",
-    name: "La Faute aux Ours",
-    shortName: "Faute aux Ours",
-    district: "Guillotière",
-    category: "Bars",
-    modes: ["moon"],
-    address: "4 grande rue de la Guillotière, 69007 Lyon",
-    description:
-      "Bar de la grande rue de la Guillotière. Vérifier les horaires et les soirées auprès du lieu.",
-    source:
-      "https://lyon7rivegauche.com/wp-content/uploads/2025/12/L7RG_Guide2026_115x160_Crea-v5_Web.pdf",
-    color: "#c0a18c",
-  },
-  {
     id: "blue",
     name: "Blue Monday",
     district: "Guillotière",
@@ -334,6 +320,35 @@ export function makeWheelPool(list, recent = [], random = Math.random) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   return pool.slice(0, 6);
+}
+export function renewWheelPool(
+  list,
+  recent = [],
+  current = [],
+  random = Math.random,
+) {
+  let eligible = list.filter(
+    (p) => p.available !== false && !recent.includes(p.id),
+  );
+  if (!eligible.length) eligible = list.filter((p) => p.available !== false);
+  const old = new Set(current.map((p) => p.id));
+  const shuffle = (values) => {
+    const result = [...values];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  };
+  const result = shuffle(
+    [
+      ...shuffle(eligible.filter((p) => !old.has(p.id))).slice(0, 6),
+      ...shuffle(eligible.filter((p) => old.has(p.id))),
+    ].slice(0, 6),
+  );
+  if (result.length > 1 && result.every((p, i) => p.id === current[i]?.id))
+    result.push(result.shift());
+  return result;
 }
 export function targetRotation(current, index, count, turns = 6) {
   const tau = Math.PI * 2;

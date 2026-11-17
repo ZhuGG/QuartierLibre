@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createWheelLettering } from "./wheel-type.js";
 import { targetRotation, spinProgress } from "./data.js";
 export class ArcadeWheel {
   constructor(host, { onTick = () => {}, onDone = () => {} } = {}) {
@@ -18,7 +19,7 @@ export class ArcadeWheel {
       host.innerHTML = '<div class="fallback-wheel">☀</div>';
       return;
     }
-    this.renderer.setPixelRatio(1);
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.4;
@@ -26,7 +27,7 @@ export class ArcadeWheel {
     this.renderer.domElement.setAttribute("aria-hidden", "true");
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
-    this.camera.position.set(0, -1, 11.8);
+    this.camera.position.set(0, -0.4, 11.8);
     this.camera.lookAt(0, 0, 0);
     this.scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x23264b, 3));
     [
@@ -39,7 +40,7 @@ export class ArcadeWheel {
       this.scene.add(l);
     });
     this.root = new THREE.Group();
-    this.root.rotation.x = 0.23;
+    this.root.rotation.x = 0.1;
     this.scene.add(this.root);
     this.rotor = new THREE.Group();
     this.root.add(this.rotor);
@@ -53,6 +54,7 @@ export class ArcadeWheel {
     };
     const gold = this.mat("#d6ad63", 0.85, 0.24),
       navy = this.mat("#162342", 0.6, 0.28);
+    this.trimMaterial = gold;
     ring(2.58, 0.13, -0.12, navy);
     ring(2.47, 0.065, 0.18, gold);
     ring(2.7, 0.035, -0.1, gold);
@@ -82,6 +84,7 @@ export class ArcadeWheel {
       this.mat("#f6cf73", 0.55, 0.24),
     );
     face.position.z = 0.4;
+    this.hubFace = face;
     this.root.add(face);
     this.pointer = new THREE.Group();
     this.pointer.position.set(0, 2.72, 0.35);
@@ -116,7 +119,15 @@ export class ArcadeWheel {
   }
   setPlaces(places, mode) {
     this.places = places;
+    this.wedges = [];
+    this.mode = mode;
+    if (places.length && !this.spinning)
+      this.angle = targetRotation(this.angle, 0, places.length, 0);
     if (!this.renderer) return;
+    this.trimMaterial.color.set(mode === "sun" ? "#d6ad63" : "#91bac7");
+    this.trimMaterial.emissive.set(mode === "sun" ? "#b6792a" : "#5e9eab");
+    this.trimMaterial.emissiveIntensity = 0.12;
+    this.hubFace.material.color.set(mode === "sun" ? "#f6cf73" : "#a8d1d8");
     while (this.segments.children.length) {
       let m = this.segments.children[0];
       this.segments.remove(m);
@@ -151,43 +162,31 @@ export class ArcadeWheel {
       );
       wedge.position.z = 0.015;
       this.segments.add(wedge);
-      const c = document.createElement("canvas");
-      c.width = 512;
-      c.height = 192;
-      let ctx = c.getContext("2d");
-      ctx.fillStyle = "#172d33";
-      ctx.font = "bold 58px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const words = (p.shortName || p.name)
-          .replace(/^Le Bistrot des /, "Les ")
-          .replace(/^Le Petit /, "Petit ")
-          .split(" "),
-        lines = [""];
-      for (const word of words) {
-        let last = lines.length - 1;
-        if ((lines[last] + " " + word).trim().length > 14 && lines[last])
-          lines.push(word);
-        else lines[last] = (lines[last] + " " + word).trim();
-      }
-      for (let j = 0; j < Math.min(lines.length, 2); j++)
-        ctx.fillText(lines[j], 256, lines.length === 1 ? 96 : 65 + j * 62, 480);
-      let texture = new THREE.CanvasTexture(c);
+      this.wedges.push(wedge);
+    });
+    if (places.length) {
+      const texture = new THREE.CanvasTexture(
+        createWheelLettering(places, mode),
+      );
       texture.colorSpace = THREE.SRGBColorSpace;
-      texture.magFilter = THREE.NearestFilter;
-      const label = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.85, 0.78),
+      texture.anisotropy = Math.min(
+        4,
+        this.renderer.capabilities.getMaxAnisotropy(),
+      );
+      const lettering = new THREE.Mesh(
+        new THREE.PlaneGeometry(5.4, 5.4),
         new THREE.MeshBasicMaterial({
           map: texture,
           transparent: true,
           depthWrite: false,
+          polygonOffset: true,
+          polygonOffsetFactor: -1,
         }),
       );
-      let a = (start + end) / 2;
-      label.position.set(Math.cos(a) * 1.42, Math.sin(a) * 1.42, 0.23);
-      label.rotation.z = a + (Math.cos(a) < 0 ? Math.PI : 0);
-      this.segments.add(label);
-    });
+      lettering.position.z = 0.245;
+      lettering.renderOrder = 3;
+      this.segments.add(lettering);
+    }
   }
   resize() {
     if (!this.renderer) return;
@@ -195,12 +194,15 @@ export class ArcadeWheel {
     if (!width || !height) return;
     this.renderer.setSize(Math.round(width), Math.round(height), false);
     this.camera.aspect = width / height;
-    this.camera.position.z = 9.9;
+    this.camera.position.z = 9.1;
     this.camera.updateProjectionMatrix();
   }
   spin(index, power = 0.4) {
     if (this.spinning || !this.places.length) return;
     this.spinning = true;
+    this.wedges?.forEach((w) => {
+      w.material.emissiveIntensity = 0;
+    });
     this.start = performance.now();
     this.from = this.angle;
     this.to = targetRotation(
@@ -240,6 +242,10 @@ export class ArcadeWheel {
       if (p === 1) {
         this.spinning = false;
         this.pointer.rotation.z = 0;
+        this.wedges[this.index].material.emissive.set(
+          this.mode === "sun" ? "#ca8e32" : "#61a7bb",
+        );
+        this.wedges[this.index].material.emissiveIntensity = 0.5;
         this.onDone(this.index);
       }
     }

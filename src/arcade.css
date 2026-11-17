@@ -1,0 +1,1134 @@
+/* Legibility and mechanical controls. The cabinet glow belongs to the machine,
+   leaving the abstract backdrop quiet behind all reading surfaces. */
+.room {
+  background-image: url("/assets/arcade-abstract-v1.png");
+  background-position: center;
+  background-size: cover;
+}
+.site-header {
+  background: #10202be8;
+  padding-inline: 13px;
+}
+.play-top {
+  background: #10202bce;
+  padding-inline: 12px;
+}
+.room-shade {
+  background: linear-gradient(
+    90deg,
+    #0a172449,
+    #0a172415 35%,
+    #0a172425 65%,
+    #0a172449
+  );
+}
+.choice-art,
+.neighborhood-strip {
+  background-image: url("/assets/arcade-abstract-v1.png");
+}
+.choice-art {
+  background-size: 200% auto;
+  background-position: left center;
+}
+.moon-choice .choice-art {
+  background-position: right center;
+}
+.neighborhood-strip {
+  height: 38px;
+  background-size: 100% auto;
+  background-position: center 60%;
+}
+body[data-mode="moon"] .neighborhood-strip {
+  background-size: 100% auto;
+  background-position: right 60%;
+}
+.header-caption,
+.header-actions {
+  font-size: 11px;
+}
+.eyebrow {
+  font-size: 11px;
+}
+.plain-button {
+  font-size: 11px;
+  min-height: 36px;
+}
+.text-button {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.site-header > a {
+  font-size: 13px;
+}
+.choose .intro {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.choice-copy {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.choice-top,
+.choice-bottom {
+  font-size: 11px;
+}
+.welcome-bottom {
+  font-size: 10px;
+}
+.left-panel {
+  padding: 22px 18px;
+  background: #10202bd9;
+  border: 1px solid #6f89844d;
+}
+.left-panel h2 {
+  font-size: 29px;
+}
+.left-panel ol {
+  font-size: 13px;
+  line-height: 2.15;
+  padding-left: 23px;
+}
+.side-note {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.session-stamp span {
+  font-size: 10px;
+}
+.right-panel {
+  background: #10202bf2;
+  border: 1px solid #738e8455;
+  padding: 22px 18px;
+}
+.right-panel > .eyebrow {
+  font-size: 10px;
+}
+.field-label {
+  font-size: 10px;
+}
+.right-panel select {
+  font-size: 13px;
+  min-height: 42px;
+}
+.category-list button {
+  font-size: 13px;
+  padding: 11px;
+}
+.category-list button > span {
+  font-size: 9px;
+}
+.favorite-filter {
+  font-size: 12px;
+}
+.next-ticket > span {
+  font-size: 10px;
+}
+.next-ticket p {
+  font-size: 13px;
+}
+.play-top-note {
+  font-size: 10px;
+}
+.keyboard-note {
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+.cabinet {
+  --cabinet-glow: #efc078;
+  --glow-rgb: 239, 192, 120;
+  filter: drop-shadow(9px 16px 3px #06111bc9);
+}
+body[data-mode="moon"] .cabinet {
+  --cabinet-glow: #a5dce6;
+  --glow-rgb: 165, 220, 230;
+}
+.cabinet:before,
+.cabinet:after {
+  content: "";
+  position: absolute;
+  top: 31px;
+  bottom: 15px;
+  width: 3px;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--cabinet-glow);
+  box-shadow:
+    0 0 9px rgba(var(--glow-rgb), 0.45),
+    0 0 25px rgba(var(--glow-rgb), 0.16);
+  opacity: 0.7;
+  transition:
+    box-shadow 0.45s,
+    opacity 0.45s;
+}
+.cabinet:before {
+  left: 2px;
+}
+.cabinet:after {
+  right: 2px;
+}
+.cabinet.spinning:before,
+.cabinet.spinning:after {
+  opacity: 1;
+  box-shadow:
+    0 0 12px rgba(var(--glow-rgb), 0.7),
+    0 0 40px rgba(var(--glow-rgb), 0.24);
+}
+.marquee {
+  padding: 12px 18px;
+  background:
+    linear-gradient(180deg, #ffffff32, transparent 65%), var(--case-light);
+  box-shadow:
+    inset 0 4px #fff6,
+    inset 0 -4px #0002,
+    0 0 22px rgba(var(--glow-rgb), 0.15);
+}
+.marquee h2 {
+  font-size: 33px;
+  text-shadow: 1px 2px #fff3;
+}
+.marquee > div > span {
+  font-size: 9px;
+  letter-spacing: 0.7px;
+}
+.marquee-icon {
+  filter: drop-shadow(0 0 5px rgba(var(--glow-rgb), 0.5));
+}
+.roof-lights {
+  font-size: 11px;
+  color: var(--cabinet-glow);
+  text-shadow: 0 0 6px var(--cabinet-glow);
+}
+.roof-serial {
+  font-size: 9px;
+}
+.screen-bezel {
+  padding: 14px 15px 12px;
+  background:
+    linear-gradient(90deg, #ffffff14, transparent 15%, transparent 85%, #0002),
+    var(--case);
+}
+.screen {
+  box-shadow:
+    0 0 0 3px var(--case-dark),
+    inset 0 0 32px #0008,
+    0 3px 14px rgba(var(--glow-rgb), 0.16);
+}
+.screen:after {
+  background: linear-gradient(130deg, #ffffff08, transparent 30%);
+  box-shadow: inset 0 0 12px #0006;
+}
+.scanlines {
+  opacity: 0.035;
+}
+.screen-top {
+  font-size: 10px;
+  padding: 13px 12px 0;
+}
+.screen-bottom {
+  font:
+    700 14px/1.5 "Courier New",
+    monospace;
+  padding: 4px 12px 12px;
+  min-height: 40px;
+  color: #fff2d7;
+}
+.screen-bottom > span:first-child {
+  max-width: 94%;
+}
+.wheel {
+  height: 300px;
+}
+.wheel canvas {
+  image-rendering: auto;
+}
+.status-led {
+  background: var(--cabinet-glow);
+  box-shadow: 0 0 6px var(--cabinet-glow);
+}
+.wheel-legend {
+  margin: 0;
+  padding: 11px 13px;
+  list-style: none;
+  background: #132631;
+  border: 6px solid var(--case-deep);
+  border-top: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 9px;
+  min-height: 106px;
+  color: #f3ead7;
+}
+.wheel-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 25px;
+  padding: 5px 6px;
+  font:
+    12px/1.4 "Courier New",
+    monospace;
+  border: 1px solid #849f8d22;
+  background: #0e202b;
+  transition:
+    background 0.16s,
+    border-color 0.16s,
+    color 0.16s;
+}
+.wheel-legend li > span {
+  align-self: flex-start;
+  margin-top: 1px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--cabinet-glow);
+  font-weight: bold;
+  min-width: 17px;
+}
+.wheel-legend li.current {
+  border-color: var(--cabinet-glow);
+  background: #29404b;
+  color: #fff8e6;
+}
+.wheel-legend li.current > span {
+  color: #fff8e6;
+}
+.control-deck {
+  padding: 13px 14px 15px;
+  gap: 12px;
+  min-height: 92px;
+  background:
+    linear-gradient(180deg, #ffffff30, transparent 60%), var(--case-light);
+}
+.launch-area {
+  gap: 11px;
+  min-width: 80px;
+}
+.lever-caption {
+  font-size: 10px;
+  letter-spacing: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+.button-caption {
+  font-size: 8px;
+  letter-spacing: 0;
+  white-space: normal;
+  text-align: center;
+}
+.power-track {
+  height: 7px;
+}
+.activity-control {
+  width: 68px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.activity-control > span {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: bold;
+  color: var(--case-deep);
+  text-align: center;
+  min-height: 14px;
+}
+.activity-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 53px;
+  height: 53px;
+  padding: 0;
+  background: repeating-conic-gradient(
+    from -4deg,
+    #263b41 0 4deg,
+    transparent 4deg 36deg
+  );
+  border: 2px solid var(--case-dark);
+  border-radius: 50%;
+  box-shadow:
+    inset 1px 2px #fff5,
+    0 3px var(--case-deep);
+  touch-action: manipulation;
+}
+.dial-face {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 36px;
+  background: repeating-conic-gradient(#405657 0 15deg, #344a4b 15deg 30deg);
+  border: 3px solid #21383e;
+  border-radius: 50%;
+  transform: rotate(var(--dial-angle, 0deg));
+  transition: transform 0.38s cubic-bezier(0.25, 1.3, 0.45, 1);
+  box-shadow:
+    inset 2px 2px #8b9d8e,
+    inset -2px -2px #142d37;
+}
+.dial-face:after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 11px;
+  top: 2px;
+  left: 13px;
+  background: #f2d298;
+  box-shadow: 1px 1px #132b34;
+}
+.activity-dial:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 1px 2px #fff5,
+    0 1px var(--case-deep);
+}
+.reroll-button {
+  min-width: 62px;
+  min-height: 63px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border: 3px solid #2b4648;
+  border-radius: 3px;
+  background: #537d74;
+  color: #fff7db;
+  box-shadow:
+    inset 2px 2px #9db5a0,
+    inset -2px -2px #34534c,
+    0 4px #233c3f;
+  touch-action: manipulation;
+}
+.reroll-button > span {
+  font: 27px/1 monospace;
+}
+.reroll-button > b {
+  font:
+    700 9px/1.3 "Courier New",
+    monospace;
+  letter-spacing: 0.3px;
+}
+.reroll-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 2px 2px #2e5249,
+    0 1px #233c3f;
+}
+.reroll-button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+.small-arcade {
+  font-size: 8px;
+  gap: 9px;
+}
+.small-arcade span {
+  height: 23px;
+  width: 23px;
+}
+.slot-lever {
+  right: -49px;
+  top: -78px;
+  width: 68px;
+  height: 164px;
+  perspective: 260px;
+}
+.slot-lever:before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -3px;
+  width: 48px;
+  height: 91px;
+  border: 4px solid #172d38;
+  background: linear-gradient(90deg, #566e79, #344b58);
+  box-shadow:
+    inset 3px 3px #96a6a1,
+    inset -3px -3px #233946,
+    4px 5px 0 #07182466;
+}
+.slot-lever:after {
+  content: "TIRER ↓";
+  position: absolute;
+  bottom: 7px;
+  left: 2px;
+  width: 34px;
+  color: #d8e4d7;
+  font: bold 6px/1.4 monospace;
+  letter-spacing: 0.4px;
+  pointer-events: none;
+}
+.lever-mount {
+  left: 4px;
+  bottom: 30px;
+  width: 35px;
+  height: 35px;
+  border-radius: 5px;
+  box-shadow:
+    inset 2px 2px #9baba5,
+    inset -3px -3px #2c424e;
+}
+.lever-mount:before {
+  left: 10px;
+  top: 9px;
+  width: 18px;
+  height: 12px;
+}
+.lever-arm {
+  left: 23px;
+  bottom: 48px;
+  height: 105px;
+  width: 12px;
+  transform-origin: 50% 100%;
+  transform: perspective(240px) rotateX(calc(var(--pull) * -76deg))
+    rotateZ(-6deg);
+  transition: transform 0.46s cubic-bezier(0.15, 1.5, 0.42, 1);
+  box-shadow: 3px 1px #091d2859;
+  border-color: #1b303c;
+  background: linear-gradient(
+    90deg,
+    #536b76 0 20%,
+    #e2e1c6 20% 44%,
+    #a9bab2 44% 65%,
+    #465e69 65%
+  );
+}
+.slot-lever.pressed .lever-arm {
+  transition: transform 0.05s linear;
+}
+.lever-ball {
+  width: 37px;
+  height: 35px;
+  left: -14px;
+  background: #ad5037;
+  box-shadow:
+    inset 5px 5px #e1a16b,
+    inset -7px -6px #642e2c;
+  filter: drop-shadow(2px 3px #091c2455);
+}
+.lever-ball:after {
+  width: 9px;
+  height: 6px;
+  left: 8px;
+  top: 7px;
+  background: #f3cf92;
+}
+.slot-lever:disabled .lever-ball {
+  filter: saturate(0.65);
+}
+.cabinet-front {
+  min-height: 90px;
+  padding-top: 10px;
+}
+.speaker {
+  height: 25px;
+}
+.cabinet-sticker {
+  font-size: 9px;
+}
+.front-bottom {
+  font-size: 6px;
+}
+.next-ticket {
+  margin-top: 20px;
+}
+.directory-heading h2 {
+  font-size: 26px;
+}
+.place-title {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.place-meta {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.place p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.source-note,
+.result-note {
+  font-size: 11px;
+  line-height: 1.8;
+}
+.unavailable {
+  font-size: 10px;
+}
+.search input {
+  font-size: 13px;
+}
+.ticket-body > #result-category {
+  font-size: 11px;
+}
+.ticket-body > p:not(.eyebrow, .ticket-code, .result-note),
+.ticket-body address {
+  font-size: 14px;
+}
+.ticket-links a {
+  font-size: 11px;
+}
+.ticket-body > .text-button {
+  font-size: 11px;
+}
+.ticket-again {
+  font-size: 12px;
+}
+.ticket-code {
+  font-size: 7px;
+}
+.info-dialog p,
+.info-dialog li {
+  font-size: 14px;
+}
+footer,
+footer .text-button {
+  font-size: 9px;
+}
+.renewing .wheel canvas {
+  animation: wheel-reload 0.46s ease-out;
+}
+.renewing .wheel-legend li {
+  animation: legend-in 0.38s both;
+}
+.renewing .wheel-legend li:nth-child(2n) {
+  animation-delay: 0.05s;
+}
+.renewing #reroll > span {
+  animation: reroll-turn 0.45s ease-out;
+}
+.changing-activity #activity-label {
+  animation: activity-label 0.35s ease-out;
+}
+.changing-activity .screen {
+  animation: screen-response 0.4s ease-out;
+}
+.spinning .roof-lights,
+.spinning .status-led {
+  animation: lamp-breathe 1.6s ease-in-out infinite;
+}
+.spinning .marquee {
+  box-shadow:
+    inset 0 4px #fff6,
+    inset 0 -4px #0002,
+    0 0 30px rgba(var(--glow-rgb), 0.28);
+}
+@keyframes wheel-reload {
+  0% {
+    opacity: 0.2;
+    transform: translateY(7px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes legend-in {
+  from {
+    opacity: 0.2;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes reroll-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes activity-label {
+  from {
+    opacity: 0.25;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes screen-response {
+  50% {
+    filter: brightness(1.14);
+  }
+}
+@keyframes lamp-breathe {
+  50% {
+    opacity: 0.72;
+    filter: brightness(1.15);
+  }
+}
+@media (max-width: 1050px) {
+  .game-layout {
+    grid-template-columns: 140px minmax(310px, 410px) 170px;
+    gap: 50px;
+  }
+  .left-panel,
+  .right-panel {
+    padding: 17px 12px;
+  }
+  .left-panel h2 {
+    font-size: 25px;
+  }
+  .left-panel ol {
+    font-size: 12px;
+  }
+  .screen-top {
+    font-size: 9px;
+  }
+  .screen-bottom {
+    font-size: 13px;
+  }
+  .control-deck {
+    gap: 9px;
+    padding-inline: 12px;
+  }
+  .activity-control {
+    width: 58px;
+  }
+  .reroll-button {
+    min-width: 56px;
+  }
+  .lever-caption {
+    font-size: 9px;
+  }
+  .slot-lever {
+    right: -46px;
+  }
+  .wheel-legend {
+    padding-inline: 10px;
+    gap: 5px 7px;
+  }
+  .wheel-legend li {
+    font-size: 11px;
+    padding: 4px;
+  }
+  .wheel {
+    height: 285px;
+  }
+}
+@media (max-width: 800px) {
+  .game-layout {
+    grid-template-columns: minmax(300px, 410px) minmax(145px, 190px);
+    gap: 48px;
+  }
+  .left-panel {
+    display: none;
+  }
+  .right-panel {
+    padding: 16px 12px;
+  }
+  .choice-copy {
+    font-size: 12px;
+  }
+  .choice-top,
+  .choice-bottom {
+    font-size: 9px;
+  }
+  .wheel {
+    height: 290px;
+  }
+}
+@media (max-width: 600px) {
+  .game-layout {
+    display: flex;
+    gap: 22px;
+  }
+  .site-header > a {
+    font-size: 10px;
+  }
+  .plain-button {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .site-header {
+    margin-inline: 14px;
+  }
+  .header-actions {
+    gap: 8px;
+  }
+  .local-label {
+    font-size: 8px;
+  }
+  .choose .intro {
+    font-size: 13px;
+  }
+  .choice-copy {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .choice-top {
+    font-size: 8px;
+  }
+  .choice-bottom {
+    font-size: 8px;
+  }
+  .choice {
+    min-height: 360px;
+  }
+  .choice-copy {
+    min-height: 54px;
+  }
+  .welcome-bottom {
+    font-size: 8px;
+    line-height: 1.8;
+  }
+  .choose h1 {
+    font-size: 27px;
+  }
+  .choice-art {
+    height: 96px;
+  }
+  .play {
+    padding-inline: 12px;
+  }
+  .cabinet {
+    width: calc(100% - 43px);
+    max-width: 370px;
+    margin-right: 39px;
+  }
+  .cabinet:before,
+  .cabinet:after {
+    width: 2px;
+  }
+  .marquee {
+    padding: 10px 12px;
+  }
+  .marquee h2 {
+    font-size: 28px;
+    margin-top: 5px;
+  }
+  .marquee > div > span {
+    font-size: 8px;
+  }
+  .marquee-icon {
+    font-size: 33px;
+  }
+  .screen-bezel {
+    padding: 10px 9px;
+  }
+  .wheel {
+    height: 245px;
+  }
+  .screen-top {
+    font-size: 8px;
+    padding: 10px 8px 0;
+  }
+  .screen-bottom {
+    font-size: 12px;
+    min-height: 39px;
+    padding: 5px 8px 10px;
+    line-height: 1.5;
+  }
+  .wheel-legend {
+    min-height: 106px;
+    padding: 8px;
+    gap: 4px 6px;
+    border-width: 6px;
+  }
+  .wheel-legend li {
+    font-size: 11px;
+    min-height: 27px;
+    padding: 4px;
+    gap: 5px;
+    line-height: 1.3;
+  }
+  .wheel-legend li > span {
+    font-size: 9px;
+    min-width: 14px;
+  }
+  .control-deck {
+    min-height: 90px;
+    padding: 10px 9px 14px;
+    gap: 7px;
+  }
+  .activity-control {
+    width: 48px;
+    gap: 7px;
+  }
+  .activity-control > span {
+    font-size: 9px;
+    line-height: 1.3;
+  }
+  .activity-dial {
+    width: 45px;
+    height: 45px;
+  }
+  .dial-face {
+    width: 31px;
+    height: 31px;
+  }
+  .dial-face:after {
+    left: 10px;
+    height: 9px;
+  }
+  .launch-area {
+    min-width: 60px;
+    gap: 9px;
+  }
+  .lever-caption {
+    font-size: 8px;
+    line-height: 1.4;
+  }
+  .button-caption {
+    font-size: 7px;
+    line-height: 1.4;
+  }
+  .reroll-button {
+    min-width: 49px;
+    min-height: 58px;
+    border-width: 3px;
+  }
+  .reroll-button > span {
+    font-size: 24px;
+  }
+  .reroll-button > b {
+    font-size: 8px;
+  }
+  .small-arcade {
+    font-size: 7px;
+    padding: 0;
+    gap: 9px;
+  }
+  .small-arcade span {
+    width: 19px;
+    height: 19px;
+  }
+  .slot-lever {
+    right: -43px;
+    top: -78px;
+    height: 161px;
+    width: 61px;
+  }
+  .slot-lever:before {
+    width: 42px;
+  }
+  .lever-arm {
+    height: 102px;
+    left: 21px;
+  }
+  .lever-ball {
+    width: 34px;
+    height: 32px;
+    left: -13px;
+  }
+  .lever-mount {
+    left: 3px;
+    width: 32px;
+  }
+  .slot-lever:after {
+    font-size: 6px;
+    left: 1px;
+  }
+  .neighborhood-strip {
+    height: 30px;
+  }
+  .cabinet-front {
+    min-height: 83px;
+    padding: 9px 11px;
+  }
+  .speaker {
+    height: 21px;
+    width: 42px;
+  }
+  .ticket-slot {
+    height: 32px;
+    width: 46px;
+    margin-top: 0;
+  }
+  .ticket-slot span {
+    left: 9px;
+  }
+  .cabinet-sticker {
+    font-size: 8px;
+    padding: 6px;
+  }
+  .front-bottom {
+    font-size: 4px;
+    left: 11px;
+    right: 11px;
+  }
+  .right-panel {
+    padding: 15px;
+    max-width: 400px;
+    gap: 12px;
+  }
+  .right-panel .field-label {
+    font-size: 10px;
+  }
+  .right-panel select {
+    font-size: 12px;
+  }
+  .right-panel .category-list button {
+    font-size: 12px;
+  }
+  .favorite-filter {
+    font-size: 11px;
+  }
+  .keyboard-note {
+    font-size: 8px;
+    margin: 20px 0 30px;
+    line-height: 2.2;
+  }
+  .directory {
+    padding: 17px;
+  }
+  .directory-heading h2 {
+    font-size: 23px;
+  }
+  .place-title {
+    font-size: 18px;
+  }
+  .place-meta {
+    font-size: 10px;
+  }
+  .place p {
+    font-size: 11px;
+  }
+  .source-note {
+    font-size: 10px;
+  }
+  .text-button {
+    font-size: 10px;
+  }
+  .roof-serial {
+    font-size: 7px;
+  }
+  .roof-lights {
+    font-size: 9px;
+  }
+  .ticket-body {
+    padding-inline: 24px;
+  }
+  .ticket-body h2 {
+    font-size: 31px;
+  }
+  .ticket-links a {
+    font-size: 10px;
+    padding-inline: 8px;
+  }
+  .result-note {
+    font-size: 11px;
+  }
+  footer,
+  footer .text-button {
+    font-size: 8px;
+  }
+}
+@media (max-width: 360px) {
+  .cabinet {
+    width: calc(100% - 37px);
+    margin-right: 33px;
+  }
+  .control-deck {
+    gap: 5px;
+    padding-inline: 7px;
+  }
+  .activity-control {
+    width: 40px;
+  }
+  .activity-dial {
+    width: 39px;
+    height: 39px;
+  }
+  .reroll-button {
+    min-width: 43px;
+  }
+  .reroll-button > b {
+    font-size: 7px;
+  }
+  .lever-caption {
+    font-size: 7px;
+  }
+  .button-caption {
+    font-size: 6px;
+  }
+  .small-arcade {
+    font-size: 6px;
+  }
+  .wheel {
+    height: 225px;
+  }
+  .wheel-legend li {
+    font-size: 10px;
+  }
+  .wheel-legend li > span {
+    font-size: 8px;
+    min-width: 12px;
+  }
+  .slot-lever {
+    right: -39px;
+  }
+  .screen-top {
+    font-size: 7px;
+  }
+  .screen-bottom {
+    font-size: 11px;
+  }
+  .marquee h2 {
+    font-size: 24px;
+  }
+  .marquee > div > span {
+    font-size: 7px;
+  }
+}
+.control-deck {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) 64px 30px;
+  justify-items: center;
+}
+.launch-area {
+  width: 100%;
+  min-width: 0;
+}
+.slot-lever {
+  right: -53px;
+}
+@media (max-width: 1050px) {
+  .control-deck {
+    grid-template-columns: 58px minmax(0, 1fr) 56px 26px;
+  }
+  .slot-lever {
+    right: -48px;
+  }
+}
+@media (max-width: 600px) {
+  .control-deck {
+    grid-template-columns: 48px minmax(0, 1fr) 49px 24px;
+  }
+  .slot-lever {
+    right: -53px;
+  }
+  .lever-caption {
+    max-width: 100%;
+  }
+}
+@media (max-width: 360px) {
+  .control-deck {
+    grid-template-columns: 40px minmax(0, 1fr) 43px 22px;
+  }
+  .slot-lever {
+    right: -44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .renewing .wheel canvas,
+  .renewing .wheel-legend li,
+  .renewing #reroll > span,
+  .changing-activity #activity-label,
+  .changing-activity .screen,
+  .spinning .roof-lights,
+  .spinning .status-led {
+    animation: none;
+  }
+  .dial-face,
+  .lever-arm,
+  .wheel-legend li,
+  .cabinet:before,
+  .cabinet:after {
+    transition: none;
+  }
+}
