@@ -1,0 +1,541 @@
+/* The controls keep their DOM semantics; the visible trigger is a mechanical lever. */
+.choice-art {
+  display: block;
+  width: calc(100% + 50px);
+  height: 150px;
+  margin: 16px -25px 0;
+  background: url("/assets/guillotiere.png") left bottom/200% auto no-repeat;
+  image-rendering: pixelated;
+  border-block: 2px solid #172d333b;
+  box-shadow: inset 0 4px #0002;
+}
+.moon-choice .choice-art {
+  background-position: right bottom;
+}
+.choice .pixel-sun,
+.choice .pixel-moon {
+  display: none;
+}
+.choice {
+  min-height: 440px;
+}
+.choice strong {
+  margin-top: 25px;
+}
+.choice-copy {
+  font-size: 11px;
+}
+.choice-top {
+  font-size: 9px;
+}
+.choice-bottom {
+  margin-top: 23px;
+}
+.choose {
+  margin-top: 42px;
+  margin-bottom: 48px;
+}
+.choose h1 {
+  font-size: clamp(27px, 3vw, 39px);
+}
+.intro {
+  font-size: 12px;
+}
+.room {
+  background-image: url("/assets/guillotiere.png");
+  background-position: center center;
+  background-size: cover;
+}
+.room-shade {
+  background: linear-gradient(
+    90deg,
+    #111e27d9,
+    #111e27b8 25%,
+    #111e27c9 75%,
+    #111e27d9
+  );
+}
+.choice-divider {
+  z-index: 3;
+}
+.screen-top {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.screen-bottom {
+  font-size: 9px;
+  line-height: 1.5;
+  min-height: 34px;
+}
+.screen-bottom > span:first-child {
+  max-width: 95%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scanlines {
+  opacity: 0.08;
+}
+.wheel {
+  height: 325px;
+}
+.left-panel h2 {
+  font-size: 31px;
+  line-height: 1.25;
+  letter-spacing: -1px;
+}
+.side-note {
+  font-size: 10px;
+}
+.launch-area {
+  min-height: 58px;
+  justify-content: center;
+  gap: 13px;
+}
+.lever-caption {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  font-weight: bold;
+  color: var(--case-deep);
+}
+.slot-lever {
+  position: absolute;
+  right: -54px;
+  top: -202px;
+  width: 73px;
+  height: 184px;
+  background: none;
+  border: 0;
+  padding: 0;
+  z-index: 7;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  --pull: 0;
+}
+.slot-lever:disabled {
+  opacity: 1;
+}
+.lever-mount {
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  width: 43px;
+  height: 56px;
+  background: #506169;
+  border: 4px solid #1a2c35;
+  box-shadow:
+    inset 4px 4px #8b9a94,
+    inset -4px -4px #2e414b,
+    4px 4px #0a1c2459;
+}
+.lever-mount:before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 17px;
+  width: 25px;
+  height: 16px;
+  background: #1e313b;
+  border: 3px solid #85928b;
+}
+.lever-arm {
+  position: absolute;
+  left: 34px;
+  bottom: 30px;
+  width: 12px;
+  height: 126px;
+  transform-origin: 50% 100%;
+  transform: rotate(calc(9deg + var(--pull) * 62deg));
+  transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  background: linear-gradient(
+    90deg,
+    #3e5661 0 25%,
+    #d3d3bb 25% 50%,
+    #718789 50% 75%,
+    #304752 75%
+  );
+  border: 2px solid #21333a;
+  box-shadow: 4px 0 #0c192133;
+}
+.slot-lever.pressed .lever-arm {
+  transition: transform 0.04s linear;
+}
+.lever-ball {
+  display: block;
+  width: 38px;
+  height: 36px;
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  background: #a34232;
+  clip-path: polygon(
+    20% 0,
+    80% 0,
+    80% 10%,
+    90% 10%,
+    90% 20%,
+    100% 20%,
+    100% 80%,
+    90% 80%,
+    90% 90%,
+    80% 90%,
+    80% 100%,
+    20% 100%,
+    20% 90%,
+    10% 90%,
+    10% 80%,
+    0 80%,
+    0 20%,
+    10% 20%,
+    10% 10%,
+    20% 10%
+  );
+  box-shadow:
+    inset 6px 5px #d17e57,
+    inset -7px -6px #612b29;
+}
+.lever-ball:after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  width: 8px;
+  height: 6px;
+  background: #e7ad78;
+}
+.slot-lever:focus-visible {
+  outline-offset: 1px;
+  outline-width: 2px;
+}
+.slot-lever:hover .lever-ball {
+  filter: brightness(1.12);
+}
+.neighborhood-strip {
+  height: 86px;
+  border: 6px solid var(--case-deep);
+  border-top: 0;
+  border-bottom: 0;
+  background: url("/assets/guillotiere.png") 15% 90%/100% auto no-repeat;
+  image-rendering: pixelated;
+  box-shadow:
+    inset 0 4px #132d3355,
+    inset 0 -4px #132d3355;
+}
+body[data-mode="moon"] .neighborhood-strip {
+  background-position: 85% 92%;
+  background-size: 160% auto;
+}
+body[data-mode="moon"] .lever-ball {
+  background: #557c8c;
+  box-shadow:
+    inset 6px 5px #9fb8af,
+    inset -7px -6px #2e4c62;
+}
+body[data-mode="moon"] .lever-ball:after {
+  background: #c9d9c5;
+}
+.cabinet-front {
+  min-height: 113px;
+}
+.speaker {
+  height: 30px;
+}
+.cabinet-sticker {
+  font-size: 9px;
+  padding: 8px 10px;
+}
+.front-bottom {
+  font-size: 6px;
+}
+.game-layout {
+  gap: 65px;
+  grid-template-columns: minmax(150px, 1fr) minmax(330px, 440px) minmax(
+      150px,
+      1fr
+    );
+}
+.keyboard-note {
+  margin-top: 26px;
+}
+.choice-top:before,
+.choice-bottom:before {
+  display: none;
+}
+@media (max-width: 1050px) {
+  .game-layout {
+    grid-template-columns: 130px minmax(300px, 400px) 150px;
+    gap: 48px;
+  }
+  .left-panel h2 {
+    font-size: 25px;
+  }
+  .left-panel ol {
+    padding-left: 17px;
+    font-size: 10px;
+  }
+  .screen-top {
+    font-size: 8px;
+  }
+  .screen-bottom {
+    font-size: 8px;
+  }
+  .slot-lever {
+    right: -44px;
+    width: 65px;
+  }
+  .lever-arm {
+    left: 28px;
+  }
+  .lever-mount {
+    width: 37px;
+  }
+  .wheel {
+    height: 310px;
+  }
+  .choice-art {
+    width: calc(100% + 36px);
+    margin-left: -18px;
+    margin-right: -18px;
+  }
+}
+@media (max-width: 800px) {
+  .game-layout {
+    grid-template-columns: minmax(300px, 410px) minmax(140px, 180px);
+    gap: 50px;
+  }
+  .choice {
+    min-height: 410px;
+  }
+  .choice-art {
+    height: 130px;
+  }
+  .choice-top {
+    font-size: 8px;
+  }
+  .choice-copy {
+    font-size: 10px;
+  }
+  .room-shade {
+    background: #101e2bba;
+  }
+  .neighborhood-strip {
+    height: 78px;
+  }
+  .screen-bottom {
+    font-size: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .game-layout {
+    display: flex;
+    gap: 22px;
+  }
+  .cabinet {
+    width: calc(100% - 42px);
+    max-width: 370px;
+    margin-right: 38px;
+  }
+  .slot-lever {
+    right: -45px;
+    top: -203px;
+    width: 65px;
+    height: 174px;
+  }
+  .lever-arm {
+    height: 119px;
+    left: 27px;
+  }
+  .lever-ball {
+    width: 34px;
+    height: 33px;
+    left: -13px;
+  }
+  .screen-bezel {
+    padding: 10px;
+  }
+  .screen {
+    border-width: 6px;
+  }
+  .wheel {
+    height: 276px;
+  }
+  .screen-top {
+    padding: 10px 8px 0;
+    font-size: 7px;
+  }
+  .screen-bottom {
+    padding: 0 8px 10px;
+    font-size: 7px;
+  }
+  .control-deck {
+    padding: 13px 13px 12px;
+    gap: 12px;
+  }
+  .launch-area {
+    gap: 12px;
+  }
+  .lever-caption {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .joystick {
+    width: 43px;
+    height: 57px;
+  }
+  .joystick span {
+    left: 2px;
+  }
+  .joystick:after {
+    left: 18px;
+  }
+  .small-arcade {
+    font-size: 6px;
+    padding: 0;
+  }
+  .small-arcade span {
+    width: 22px;
+    height: 22px;
+  }
+  .button-caption {
+    font-size: 5px;
+    letter-spacing: 0.5px;
+  }
+  .neighborhood-strip {
+    height: 75px;
+    background-size: 150% auto;
+    background-position: 15% 90%;
+  }
+  .cabinet-front {
+    min-height: 103px;
+    padding: 14px 13px;
+  }
+  .speaker {
+    width: 50px;
+    height: 25px;
+  }
+  .ticket-slot {
+    width: 51px;
+    height: 38px;
+    margin-top: 1px;
+  }
+  .ticket-slot span {
+    left: 12px;
+  }
+  .ticket-slot:after {
+    left: 10px;
+  }
+  .cabinet-sticker {
+    font-size: 8px;
+    padding: 7px;
+    margin-top: 2px;
+  }
+  .front-bottom {
+    font-size: 4px;
+    left: 13px;
+    right: 13px;
+  }
+  .marquee {
+    padding: 13px 12px;
+  }
+  .marquee h2 {
+    font-size: 28px;
+  }
+  .marquee-icon {
+    font-size: 36px;
+  }
+  .marquee > div > span {
+    font-size: 6px;
+  }
+  .choice {
+    min-height: 345px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .choice-art {
+    height: 104px;
+    width: calc(100% + 24px);
+    margin: 13px -12px 0;
+    background-size: 230% auto;
+  }
+  .choice-top {
+    font-size: 6px;
+  }
+  .choice strong {
+    font-size: 19px;
+    margin-top: 19px;
+  }
+  .choice-copy {
+    font-size: 9px;
+    line-height: 1.6;
+    min-height: 42px;
+  }
+  .choice-bottom {
+    margin-top: 18px;
+    font-size: 6px;
+    min-height: 47px;
+  }
+  .choose {
+    margin-top: 28px;
+  }
+  .choose .intro {
+    font-size: 11px;
+    line-height: 1.9;
+    max-width: 300px;
+    margin-inline: auto;
+  }
+  .choose h1 {
+    font-size: 27px;
+    letter-spacing: -1.5px;
+  }
+  .right-panel {
+    max-width: 400px;
+  }
+  .directory-heading h2 {
+    font-size: 20px;
+  }
+  .header-caption {
+    display: none;
+  }
+}
+@media (max-width: 360px) {
+  .cabinet {
+    width: calc(100% - 37px);
+    margin-right: 34px;
+  }
+  .marquee h2 {
+    font-size: 24px;
+  }
+  .marquee-icon {
+    font-size: 30px;
+  }
+  .wheel {
+    height: 240px;
+  }
+  .screen-top {
+    font-size: 6px;
+  }
+  .screen-bottom {
+    font-size: 6px;
+  }
+  .slot-lever {
+    right: -41px;
+  }
+  .choice strong {
+    font-size: 16px;
+  }
+  .choice-art {
+    height: 95px;
+  }
+  .choice-copy {
+    font-size: 8px;
+  }
+  .control-deck {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+  .lever-caption {
+    font-size: 7px;
+  }
+}
