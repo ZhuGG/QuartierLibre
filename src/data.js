@@ -176,11 +176,8 @@ export const places = [
     modes: ["sun", "moon"],
     address: "13 rue Jangot, 69007 Lyon",
     description:
-      "Bistrot de quartier. Une fermeture temporaire a été signalée en novembre 2026 : vérifier la réouverture avant de l’ajouter aux tirages.",
+      "Un bistrot de quartier pour se retrouver autour d’un verre ou d’un repas, rue Jangot.",
     source: "https://www.le-court-circuit.fr/informations-pratiques",
-    statusSource:
-      "https://uat-cdn-s-www.leprogres.fr/economie/2026/11/04/des-clients-revendaient-de-la-cocaine-le-bar-le-court-circuit-ferme-15-jours-par-la-prefecture",
-    available: false,
     color: "#b8a57b",
   },
   {

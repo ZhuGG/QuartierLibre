@@ -127,3 +127,12 @@ test("tous les lieux sont sourcés dans le 7e et tous les exemples demandés exi
   ])
     assert.ok(places.some((p) => p.id === id));
 });
+
+test("le Court-Circuit participe aux tirages Soleil et Lune et au renouvellement", () => {
+  for (const mode of ["sun", "moon"]) {
+    const list = filterPlaces(places, { mode, query: "Court-Circuit" });
+    assert.deepEqual(makeWheelPool(list).map((p) => p.id), ["court"]);
+    assert.deepEqual(renewWheelPool(list).map((p) => p.id), ["court"]);
+    assert.deepEqual(makeWheelPool(list, ["court"]).map((p) => p.id), ["court"]);
+  }
+});

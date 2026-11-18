@@ -31,7 +31,7 @@ Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dern
 
 Les données sont isolées dans `src/data.js` : identifiant, nom, quartier, catégorie, modes, adresse, description, URL source, date de consultation et disponibilité. Pour élargir ensuite le périmètre, ajouter les données et les filtres de quartier ; le moteur de jeu reste indépendant.
 
-21 lieux sont intégrés, dont les sept exemples demandés. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit reste au carnet mais est exclu des tirages tant que son statut après une fermeture temporaire signalée en novembre 2026 n’est pas revérifié.
+21 lieux sont intégrés, dont les sept exemples demandés. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit est inclus dans les tirages Soleil et Lune.
 
 Les sources ont été consultées le 17 novembre 2026. Le détail des liens est disponible dans « À propos & sources » et les données. Ne pas confondre une date de consultation avec une garantie d’ouverture actuelle.
 
