@@ -1,6 +1,8 @@
 import "./style.css";
 import "./cabinet.css";
 import "./arcade.css";
+import "./cabinet-hud.css";
+import { mountCabinetHud } from "./cabinet-hud.js";
 import {
   places,
   filterPlaces,
@@ -46,6 +48,7 @@ let mode = null,
   chargeFrame,
   activePool = [],
   lastResult = null,
+  lastDraw = null,
   previousFocus = null,
   poolDirty = false;
 let favorites = storage
@@ -63,15 +66,15 @@ $("#app").innerHTML = `
  <div class="room" aria-hidden="true"></div><div class="room-shade" aria-hidden="true"></div>
  <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
  <main>
-  <section id="choose" class="choose" aria-labelledby="welcome-title"><p class="eyebrow">LYON 7e / SOLEIL & LUNE</p><h1 id="welcome-title">En journée ou en soirée ?</h1><p class="intro">Choisis une borne, puis tire le levier pour obtenir une adresse.</p>
-   <div class="choices"><button class="choice sun-choice" data-mode="sun"><span class="choice-top">SERVICE DE JOUR <span>01 / S</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-sun" aria-hidden="true"></span><strong>SOLEIL</strong><span class="choice-copy">Cafés, restaurants, parcs et culture.</span><span class="choice-bottom">CHOISIR SOLEIL <b>↗</b></span></button><span class="choice-divider" aria-hidden="true">OU</span><button class="choice moon-choice" data-mode="moon"><span class="choice-top">SERVICE DE NUIT <span>02 / L</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-moon" aria-hidden="true"></span><strong>LUNE</strong><span class="choice-copy">Bars, concerts, restaurants et club.</span><span class="choice-bottom">CHOISIR LUNE <b>↗</b></span></button></div>
-   <p class="welcome-bottom"><span>GUILLOTIÈRE / JEAN MACÉ / GERLAND</span><span>${places.length} ADRESSES · SANS INSCRIPTION</span></p>
+  <section id="choose" class="choose" aria-labelledby="welcome-title"><h1 id="welcome-title" class="sr-only">Choisir une borne</h1>
+   <div class="choices"><button class="choice sun-choice" data-mode="sun" aria-label="Choisir la borne Soleil"><span class="choice-top">SERVICE DE JOUR <span>01 / S</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-sun" aria-hidden="true"></span><strong>SOLEIL</strong><span class="choice-copy">Cafés, restaurants, parcs et culture.</span></button><span class="choice-divider" aria-hidden="true">OU</span><button class="choice moon-choice" data-mode="moon" aria-label="Choisir la borne Lune"><span class="choice-top">SERVICE DE NUIT <span>02 / L</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-moon" aria-hidden="true"></span><strong>LUNE</strong><span class="choice-copy">Bars, concerts, restaurants et club.</span></button></div>
+   <p class="welcome-bottom"><span>GUILLOTIÈRE / JEAN MACÉ / GERLAND</span><span>${places.length} ADRESSES</span></p>
   </section>
   <section id="play" class="play" hidden aria-label="La borne de sorties"><div class="play-top"><button id="back" class="text-button">← CHANGER DE BORNE</button><span class="play-top-note">GUILLOTIÈRE · JEAN MACÉ · GERLAND</span></div>
    <div class="game-layout"><aside class="left-panel"><p class="eyebrow">COMMENT JOUER</p><h2>Tire le levier.</h2><ol><li>Choisis ton envie.</li><li>Tire le levier vers le bas.</li><li>Relâche pour lancer.</li></ol><p class="side-note">Six lieux au maximum par tour.<br>Les derniers tirages sont écartés.</p><div class="session-stamp"><span>TIRAGES</span><strong id="session-count">${String(count).padStart(2, "0")}</strong></div></aside>
    <article id="cabinet" class="cabinet" aria-labelledby="machine-title"><div class="cabinet-roof"><span class="roof-serial">QL–07 / <span id="serial-mode">S</span></span><span class="roof-lights" aria-hidden="true">▪ ▪ ▪ ▪ ▪</span></div><div class="marquee"><i class="screw" aria-hidden="true"></i><div><span id="machine-kicker">JOURNÉE / LYON 7e</span><h2 id="machine-title">SOLEIL</h2></div><span id="machine-icon" class="marquee-icon" aria-hidden="true">☀</span><i class="screw" aria-hidden="true"></i></div>
     <div class="screen-bezel"><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="scanlines" aria-hidden="true"></div><div id="confetti" class="confetti" aria-hidden="true"></div></div></div>
-    <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">TIRE LE LEVIER →</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
+    <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">ÉLAN</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
     <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><span></span></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
    </article>
    <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
@@ -83,6 +86,7 @@ $("#app").innerHTML = `
  <dialog id="info" class="info-dialog"><button id="close-info" class="dialog-close" aria-label="Fermer">×</button><h2 id="info-title"></h2><div id="info-content"></div></dialog><div id="announce" class="sr-only" aria-live="polite"></div>`;
 
 $(".welcome-bottom span").textContent = "GUILLOTIÈRE / JEAN MACÉ / GERLAND";
+const hud = mountCabinetHud();
 const wheel = new ArcadeWheel($("#wheel"), {
   onTick: (p, i) => {
     sound.tick(p);
@@ -139,6 +143,7 @@ function animateCabinet(kind) {
   cabinetAnimationTimer = setTimeout(() => cabinet.classList.remove(kind), 550);
 }
 function renderCategories() {
+  hud.sync({ category, district });
   const categories = [
     "Tout",
     ...new Set(
@@ -180,6 +185,7 @@ function chooseMode(value) {
   if (spinning) return;
   cancelCharge();
   mode = value;
+  hud.resetPanels();
   category = "Tout";
   district = "Tout le 7e";
   query = "";
@@ -212,6 +218,7 @@ function home(e) {
   $("#choose").hidden = false;
   document.body.dataset.mode = "choose";
   mode = null;
+  hud.resetPanels();
   $(".choice").focus({ preventScroll: true });
 }
 function lock(value) {
@@ -271,16 +278,17 @@ function launch(power = 0.4) {
   if (!activePool.length) return;
   sound.unlock();
   lock(true);
-  $("#lever-caption").textContent = "TIRAGE EN COURS";
+  $("#lever-caption").textContent = "TIRAGE";
   $("#screen-status").textContent = "TIRAGE EN COURS";
   $("#screen-hint").textContent = "LA ROUE RALENTIT.";
   $("#announce").textContent = "La roue tourne.";
   wheel.spin(chooseIndex(activePool.length), power);
 }
 function reveal(p) {
+  lastDraw = p;
   poolDirty = true;
   lock(false);
-  $("#lever-caption").textContent = "TIRE LE LEVIER →";
+  $("#lever-caption").textContent = "ÉLAN";
   $("#screen-status").textContent = "ADRESSE TROUVÉE";
   $("#screen-hint").textContent = p.name;
   highlightPlace(activePool.findIndex((place) => place.id === p.id));
@@ -397,7 +405,10 @@ $("#launch").addEventListener("pointermove", (e) => {
 $("#launch").addEventListener("pointerup", () => {
   if (!charging) return;
   const elapsed = (performance.now() - chargeStart) / 1400;
-  const power = Math.min(1, Math.max(leverPull, elapsed * 0.5));
+  const power = Math.min(
+    1,
+    leverPull > 0.05 ? leverPull : Math.max(0.25, elapsed * 0.5),
+  );
   cancelCharge();
   launch(power);
 });
@@ -489,7 +500,7 @@ $("#again").onclick = () => {
   refreshPool();
   launch();
 };
-$("#show-last").onclick = () => openPlace(lastResult);
+$("#show-last").onclick = () => openPlace(lastDraw || lastResult);
 $("#sound").onclick = () => {
   sound.enabled = !sound.enabled;
   storage.set("sl-sound", sound.enabled);

@@ -25,6 +25,8 @@ L’amplitude du levier modifie l’élan, la durée et le nombre de tours. Le r
 
 Les mouvements réduits du système sont respectés. En cas d’absence de WebGL, un affichage de secours conserve le tirage et les fiches. Aucune donnée personnelle, aucun compte, aucune API payante.
 
+Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dernier ticket sont intégrés à la borne. Le panneau Filtres s’ouvre à la demande ; le bouton Adresses affiche le catalogue sous les commandes. Sur mobile, la poignée et sa course restent à l’intérieur du meuble pour conserver son centrage. Les libellés fonctionnels utilisent une police plus lisible, tandis que les titres et les détails graphiques gardent le caractère pixel art.
+
 ## Données et extension
 
 Les données sont isolées dans `src/data.js` : identifiant, nom, quartier, catégorie, modes, adresse, description, URL source, date de consultation et disponibilité. Pour élargir ensuite le périmètre, ajouter les données et les filtres de quartier ; le moteur de jeu reste indépendant.
@@ -36,6 +38,7 @@ Les sources ont été consultées le 17 novembre 2026. Le détail des liens est 
 ## Structure
 
 - `src/main.js` : interface, commandes, stockage et état du jeu.
+- `src/cabinet-hud.js`, `src/cabinet-hud.css` : commandes intégrées et disposition de la borne sur mobile.
 - `src/wheel.js` : modélisation, éclairage et animation Three.js.
 - `src/wheel-type.js` : composition du lettrage sur les arcs des segments.
 - `src/data.js` : catalogue et règles pures testables.
