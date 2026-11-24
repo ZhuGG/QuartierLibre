@@ -42,12 +42,19 @@ export function mountCabinetHud() {
   find(".control-deck").append(dock);
   find(".button-caption").textContent = "Espace au clavier";
 
+  const wheelDetails = document.createElement("details");
+  wheelDetails.className = "wheel-details";
+  const wheelSummary = document.createElement("summary");
+  wheelSummary.textContent = "Lieux sur la roue";
+  wheelDetails.append(wheelSummary, find("#wheel-legend"));
+  cabinet.after(wheelDetails);
+
   const directory = find(".directory");
   const directoryPanel = document.createElement("div");
   directoryPanel.id = "cabinet-directory";
   directoryPanel.hidden = true;
   directoryPanel.append(directory);
-  find(".cabinet-front").before(directoryPanel);
+  wheelDetails.after(directoryPanel);
   catalogue.addEventListener("click", () => {
     directoryPanel.hidden = !directoryPanel.hidden;
     catalogue.setAttribute("aria-expanded", String(!directoryPanel.hidden));
@@ -75,7 +82,7 @@ export function mountCabinetHud() {
   const sources = find("#sources");
   sources.textContent = "Sources";
   credits.append(signature, sources);
-  find(".cabinet-foot").before(credits);
+  directoryPanel.after(credits);
   find(".left-panel").remove();
   find(".right-panel").remove();
   find(".play-top").remove();
@@ -95,6 +102,7 @@ export function mountCabinetHud() {
     },
     resetPanels() {
       filters.open = false;
+      wheelDetails.open = false;
       directoryPanel.hidden = true;
       catalogue.setAttribute("aria-expanded", "false");
     },

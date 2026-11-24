@@ -12,6 +12,7 @@ import {
 } from "./data.js";
 import { ArcadeWheel } from "./wheel.js";
 import { Sound } from "./sound.js";
+import { mountTicketMap } from "./ticket-map.js";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
@@ -79,14 +80,15 @@ $("#app").innerHTML = `
    </article>
    <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
    <p class="keyboard-note">CLAVIER : <kbd>ESPACE</kbd> ABAISSER / RELÂCHER <span>·</span> <kbd>←</kbd> <kbd>→</kbd> CHANGER D’ENVIE</p>
-   <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources consultées le 17 novembre 2026. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
+   <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources indiquées sur les fiches. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
   </section>
  </main><footer><span>QUARTIER LIBRE — SOLEIL / LUNE</span><span>UNE SÉLECTION DU 7e ARRONDISSEMENT</span><button id="sources" class="text-button">À PROPOS & SOURCES ↗</button></footer>
- <dialog id="result" class="result"><button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button><div class="ticket-body"><p class="eyebrow" id="result-label">RÉSULTAT DU TIRAGE</p><span id="result-category"></span><h2 id="result-title"></h2><p id="result-description"></p><address id="result-address"></address><div class="ticket-perf"></div><div class="ticket-links"><a id="maps" target="_blank" rel="noopener noreferrer">Y ALLER ↗</a><a id="official" target="_blank" rel="noopener noreferrer">INFOS DU LIEU ↗</a></div><p id="result-note" class="result-note"></p><button id="favorite-result" class="text-button"></button><button id="again" class="ticket-again">UN AUTRE TOUR ↻</button><div class="barcode" aria-hidden="true"></div><p class="ticket-code">LYON 7e / QUARTIER LIBRE / SÉLECTION LOCALE</p></div></dialog>
+ <dialog id="result" class="result"><button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button><div class="ticket-body"><p class="eyebrow" id="result-label">RÉSULTAT DU TIRAGE</p><span id="result-category"></span><h2 id="result-title"></h2><p id="result-description"></p><address id="result-address"></address><div class="ticket-perf"></div><div class="ticket-links"><a id="maps" target="_blank" rel="noopener noreferrer">Y ALLER ↗</a><a id="official" target="_blank" rel="noopener noreferrer">INFOS DU LIEU ↗</a></div><details id="ticket-map" class="ticket-map"><summary>Afficher la carte</summary><p id="map-status" role="status"></p><div id="map-frame"></div><a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a></details><p id="result-note" class="result-note"></p><button id="favorite-result" class="text-button"></button><button id="again" class="ticket-again">UN AUTRE TOUR ↻</button><div class="barcode" aria-hidden="true"></div><p class="ticket-code">LYON 7e / QUARTIER LIBRE / SÉLECTION LOCALE</p></div></dialog>
  <dialog id="info" class="info-dialog"><button id="close-info" class="dialog-close" aria-label="Fermer">×</button><h2 id="info-title"></h2><div id="info-content"></div></dialog><div id="announce" class="sr-only" aria-live="polite"></div>`;
 
 $(".welcome-bottom span").textContent = "GUILLOTIÈRE / JEAN MACÉ / GERLAND";
 const hud = mountCabinetHud();
+const ticketMap = mountTicketMap($("#ticket-map"));
 const wheel = new ArcadeWheel($("#wheel"), {
   onTick: (p, i) => {
     sound.tick(p);
@@ -325,6 +327,7 @@ function openPlace(p, won = false) {
   $("#result-title").textContent = p.name;
   $("#result-description").textContent = p.description;
   $("#result-address").textContent = p.address;
+  ticketMap.setPlace(p);
   $("#maps").href =
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address)}`;
   $("#official").href = p.source;
@@ -492,9 +495,10 @@ $("#place-list").onclick = (e) => {
 };
 $("#favorite-result").onclick = () => toggleFavorite(lastResult.id);
 $("#close-result").onclick = closeResult;
-$("#result").addEventListener("close", () =>
-  previousFocus?.focus({ preventScroll: true }),
-);
+$("#result").addEventListener("close", () => {
+  ticketMap.clear();
+  previousFocus?.focus({ preventScroll: true });
+});
 $("#again").onclick = () => {
   closeResult();
   refreshPool();
@@ -526,7 +530,7 @@ $("#help").onclick = () =>
 $("#sources").onclick = () =>
   info(
     "À PROPOS & SOURCES",
-    `<p>Quartier Libre propose des sorties à Lyon 7e, avec une borne pour la journée et une borne pour la soirée.</p><p>Cette première sélection couvre Lyon 7e. Elle n’est pas exhaustive. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources consultées le 17 novembre 2026 :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a>${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
+    `<p>Quartier Libre propose des sorties à Lyon 7e, avec une borne pour la journée et une borne pour la soirée.</p><p>Cette première sélection couvre Lyon 7e. Elle n’est pas exhaustive. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources du catalogue :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a> · ${p.checked}${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
   );
 $("#close-info").onclick = () => $("#info").close();
 for (const d of $$("dialog"))
