@@ -103,9 +103,12 @@ export class Sound {
   }
 
   win() {
-    this.noise(580, 0.045, 0.13);
+    for (const delay of [0, 0.065, 0.13]) {
+      this.noise(980, 0.055, 0.12, delay);
+    }
+    this.noise(1600, 0.028, 0.10, 0.19);
     this.palette.chime.forEach((note, index) => {
-      const delay = 0.04 + index * 0.09;
+      const delay = 0.22 + index * 0.09;
       this.tone(note, index === 3 ? 0.42 : 0.25, 0.105, { delay });
       this.tone(note * 2, 0.105, 0.025, { delay, wave: "sine" });
     });

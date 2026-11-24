@@ -10,6 +10,7 @@ export function createWheelLettering(places, mode) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
+  const ink = mode === "sun" ? "#fff0d2" : "#e5f6ff";
 
   function writeArc(text, angle, radius, maxArc, preferredSize) {
     const r = radius * scale;
@@ -31,10 +32,10 @@ export function createWheelLettering(places, mode) {
       ctx.save();
       ctx.translate(center + Math.cos(a) * r, center - Math.sin(a) * r);
       ctx.rotate(Math.PI / 2 - a);
-      ctx.strokeStyle = "#101f2c";
-      ctx.lineWidth = size * 0.035;
+      ctx.strokeStyle = "#101820";
+      ctx.lineWidth = size * 0.065;
       ctx.strokeText(char, 0, 0);
-      ctx.fillStyle = "#101f2c";
+      ctx.fillStyle = ink;
       ctx.fillText(char, 0, 0);
       ctx.restore();
       cursor += widths[index];
@@ -75,10 +76,10 @@ export function createWheelLettering(places, mode) {
     ctx.rotate(Math.PI / 2 - angle);
     ctx.fillStyle = "#142b36";
     ctx.beginPath();
-    ctx.arc(0, 0, 0.135 * scale, 0, Math.PI * 2);
+    ctx.rect(-0.135 * scale, -0.105 * scale, 0.27 * scale, 0.21 * scale);
     ctx.fill();
     ctx.fillStyle = mode === "sun" ? "#ffe2a0" : "#dcf4f5";
-    ctx.font = "700 49px Arial, sans-serif";
+    ctx.font = "700 43px ui-monospace, monospace";
     ctx.fillText(String(index + 1), 0, 1);
     ctx.restore();
   });

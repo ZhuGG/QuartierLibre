@@ -1,7 +1,7 @@
 /* Legibility and mechanical controls. The cabinet glow belongs to the machine,
    leaving the abstract backdrop quiet behind all reading surfaces. */
 .room {
-  background-image: url("/assets/arcade-abstract-v1.png");
+  background-image: url("/assets/retro-bay.png");
   background-position: center;
   background-size: cover;
 }
@@ -549,8 +549,7 @@ body[data-mode="moon"] .cabinet {
   font-size: 11px;
   line-height: 1.7;
 }
-.source-note,
-.result-note {
+.source-note {
   font-size: 11px;
   line-height: 1.8;
 }
@@ -559,25 +558,6 @@ body[data-mode="moon"] .cabinet {
 }
 .search input {
   font-size: 13px;
-}
-.ticket-body > #result-category {
-  font-size: 11px;
-}
-.ticket-body > p:not(.eyebrow, .ticket-code, .result-note),
-.ticket-body address {
-  font-size: 14px;
-}
-.ticket-links a {
-  font-size: 11px;
-}
-.ticket-body > .text-button {
-  font-size: 11px;
-}
-.ticket-again {
-  font-size: 12px;
-}
-.ticket-code {
-  font-size: 7px;
 }
 .info-dialog p,
 .info-dialog li {
@@ -999,19 +979,6 @@ footer .text-button {
   }
   .roof-lights {
     font-size: 9px;
-  }
-  .ticket-body {
-    padding-inline: 24px;
-  }
-  .ticket-body h2 {
-    font-size: 31px;
-  }
-  .ticket-links a {
-    font-size: 10px;
-    padding-inline: 8px;
-  }
-  .result-note {
-    font-size: 11px;
   }
   footer,
   footer .text-button {

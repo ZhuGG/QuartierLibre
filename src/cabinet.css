@@ -4,7 +4,7 @@
   width: calc(100% + 50px);
   height: 150px;
   margin: 16px -25px 0;
-  background: url("/assets/guillotiere.png") left bottom/200% auto no-repeat;
+  background: url("/assets/retro-bay.png") left bottom/200% auto no-repeat;
   image-rendering: pixelated;
   border-block: 2px solid #172d333b;
   box-shadow: inset 0 4px #0002;
@@ -42,7 +42,7 @@
   font-size: 12px;
 }
 .room {
-  background-image: url("/assets/guillotiere.png");
+  background-image: url("/assets/retro-bay.png");
   background-position: center center;
   background-size: cover;
 }
@@ -217,7 +217,7 @@
   border: 6px solid var(--case-deep);
   border-top: 0;
   border-bottom: 0;
-  background: url("/assets/guillotiere.png") 15% 90%/100% auto no-repeat;
+  background: url("/assets/retro-bay.png") 15% 90%/100% auto no-repeat;
   image-rendering: pixelated;
   box-shadow:
     inset 0 4px #132d3355,

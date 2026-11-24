@@ -14,6 +14,7 @@ import { ArcadeWheel } from "./wheel.js";
 import { Sound } from "./sound.js";
 import { mountTicketMap } from "./ticket-map.js";
 import { mountAgenda } from "./agenda.js";
+import { mountBaySmoke } from "./bay-smoke.js";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
@@ -51,6 +52,7 @@ let mode = null,
   activePool = [],
   lastResult = null,
   lastDraw = null,
+  keptTicket = null,
   previousFocus = null,
   poolDirty = false;
 let favorites = storage
@@ -61,11 +63,34 @@ let favorites = storage
     .filter((x) => typeof x === "string")
     .slice(-3),
   count = Number(storage.get("sl-count", 0)) || 0;
+const sparkTracks = Array.from({ length: 10 }, (_, i) => {
+  const angle = i * 137.5;
+  const delay = 80 + (i % 7) * 78;
+  const duration = 750 + (i % 5) * 140;
+  return `<i style="--angle:${angle}deg;--delay:${delay}ms;--duration:${duration}ms"></i>`;
+}).join("");
+
+function dustLayer(depth, count) {
+  const near = depth === "near";
+  const grains = Array.from({ length: count }, (_, i) => {
+    const left = i % 2 === 0;
+    const x = 3 + ((i * 11 + (near ? 5 : 0)) % (near ? 21 : 34));
+    const y = (near ? 44 : 18) + (i * 17) % (near ? 44 : 68);
+    const direction = left ? 1 : -1;
+    const drift = direction * ((near ? 23 : 9) + (i % 5) * 4);
+    const rise = (near ? 30 : 13) + (i % 4) * 7;
+    const duration = (near ? 8 : 14) + (i % 7) * 1.7;
+    return `<i style="--x:${left ? x : 100 - x}%;--y:${y}%;--drift:${drift}px;--rise:-${rise}px;--flight:${duration}s;--offset:-${i * 3.17}s"></i>`;
+  }).join("");
+  return `<div class="bay-dust-layer bay-dust-${depth}">${grains}</div>`;
+}
+const bayDust = dustLayer("far", 24) + dustLayer("near", 16);
+
 const sound = new Sound();
 sound.enabled = storage.get("sl-sound", false) === true;
 
 $("#app").innerHTML = `
- <div class="room" aria-hidden="true"></div><div class="room-shade" aria-hidden="true"></div>
+ <div class="room" aria-hidden="true"></div><div class="room-shade" aria-hidden="true"></div><div class="bay-dust" aria-hidden="true"><canvas id="bay-smoke" class="bay-smoke"></canvas>${bayDust}</div>
  <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
  <main>
   <section id="choose" class="choose" aria-labelledby="welcome-title"><h1 id="welcome-title" class="sr-only">Choisir une borne</h1>
@@ -76,7 +101,7 @@ $("#app").innerHTML = `
   <section id="play" class="play" hidden aria-label="La borne de sorties"><div class="play-top"><button id="back" class="text-button">← CHANGER DE BORNE</button><span class="play-top-note">GUILLOTIÈRE · JEAN MACÉ · GERLAND</span></div>
    <div class="game-layout"><aside class="left-panel"><p class="eyebrow">COMMENT JOUER</p><h2>Tire le levier.</h2><ol><li>Choisis ton envie.</li><li>Tire le levier vers le bas.</li><li>Relâche pour lancer.</li></ol><p class="side-note">Six lieux au maximum par tour.<br>Les derniers tirages sont écartés.</p><div class="session-stamp"><span>TIRAGES</span><strong id="session-count">${String(count).padStart(2, "0")}</strong></div></aside>
    <article id="cabinet" class="cabinet" aria-labelledby="machine-title"><div class="cabinet-roof"><span class="roof-serial">QL–07 / <span id="serial-mode">S</span></span><span class="roof-lights" aria-hidden="true">▪ ▪ ▪ ▪ ▪</span></div><div class="marquee"><i class="screw" aria-hidden="true"></i><div><span id="machine-kicker">JOURNÉE / LYON 7e</span><h2 id="machine-title">SOLEIL</h2></div><span id="machine-icon" class="marquee-icon" aria-hidden="true">☀</span><i class="screw" aria-hidden="true"></i></div>
-    <div class="screen-bezel"><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="scanlines" aria-hidden="true"></div><div id="confetti" class="confetti" aria-hidden="true"></div></div></div>
+    <div class="screen-bezel"><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="wheel-effects" aria-hidden="true"><div class="wheel-sparks">${sparkTracks}</div></div><div class="scanlines" aria-hidden="true"></div></div></div>
     <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">ÉLAN</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
     <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><span></span></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
    </article>
@@ -86,20 +111,55 @@ $("#app").innerHTML = `
    <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources indiquées sur les fiches. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
   </section>
  </main><footer><span>QUARTIER LIBRE — SOLEIL / LUNE</span><span>UNE SÉLECTION DU 7e ARRONDISSEMENT</span><button id="sources" class="text-button">À PROPOS & SOURCES ↗</button></footer>
- <dialog id="result" class="result"><button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button><div class="ticket-body"><p class="eyebrow" id="result-label">RÉSULTAT DU TIRAGE</p><span id="result-category"></span><h2 id="result-title"></h2><p id="result-description"></p><address id="result-address"></address><div class="ticket-perf"></div><div class="ticket-links"><a id="maps" target="_blank" rel="noopener noreferrer">Y ALLER ↗</a><a id="official" target="_blank" rel="noopener noreferrer">INFOS DU LIEU ↗</a></div><section class="detour" aria-label="Découvrir les environs"><button id="detour-button" type="button" class="text-button">Un détour</button><p id="detour-status" role="status"></p><a id="detour-link" target="_blank" rel="noopener noreferrer" hidden></a></section><section id="ticket-map" class="ticket-map" aria-label="Carte du lieu"><p id="map-status" role="status"></p><div id="map-frame"></div><a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a></section><p id="result-note" class="result-note"></p><button id="favorite-result" class="text-button"></button><button id="again" class="ticket-again">UN AUTRE TOUR ↻</button><div class="barcode" aria-hidden="true"></div><p class="ticket-code">LYON 7e / QUARTIER LIBRE / SÉLECTION LOCALE</p></div></dialog>
+ <dialog id="result" class="result" aria-labelledby="result-title">
+  <button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button>
+  <div class="ticket-body">
+   <p class="eyebrow" id="result-label">Résultat du tirage</p>
+   <h2 id="result-title"></h2>
+   <p id="result-category"></p>
+   <address id="result-address"></address>
+   <div class="ticket-links">
+    <a id="maps" target="_blank" rel="noopener noreferrer">Y aller</a>
+    <button id="again" type="button">Garder et relancer</button>
+   </div>
+   <div id="ticket-compare" class="ticket-compare" aria-label="Comparer les tickets" hidden>
+    <button id="compare-kept" type="button"></button>
+    <button id="compare-draw" type="button"></button>
+   </div>
+   <p id="result-description"></p>
+   <div class="ticket-secondary">
+    <a id="official" target="_blank" rel="noopener noreferrer">Infos du lieu</a>
+    <button id="favorite-result" type="button" class="text-button"></button>
+   </div>
+   <p id="result-note" class="result-note"></p>
+   <section class="detour" aria-label="Découvrir les environs">
+    <button id="detour-button" type="button" class="text-button">Un détour</button>
+    <p id="detour-status" role="status"></p>
+    <a id="detour-link" target="_blank" rel="noopener noreferrer" hidden></a>
+   </section>
+   <section id="ticket-map" class="ticket-map" aria-label="Carte du lieu">
+    <p id="map-status" role="status"></p>
+    <div id="map-frame"></div>
+    <a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a>
+   </section>
+  </div>
+ </dialog>
  <dialog id="agenda" class="info-dialog" aria-labelledby="agenda-title"><button id="close-agenda" class="dialog-close" aria-label="Fermer">×</button><h2 id="agenda-title">Tirage Ville Morte</h2><p id="agenda-status" role="status"></p><article id="agenda-card" hidden><h3 id="agenda-event-name"></h3><p id="agenda-event-date"></p><p id="agenda-event-place"></p><a id="agenda-event-link" target="_blank" rel="noopener noreferrer">Voir l’annonce sur Ville Morte</a></article><button id="agenda-again" class="agenda-trigger" type="button" hidden>Autre événement</button><p><a href="https://agenda.villemorte.fr/" target="_blank" rel="noopener noreferrer">Tout l’agenda Ville Morte</a></p></dialog>
  <dialog id="info" class="info-dialog"><button id="close-info" class="dialog-close" aria-label="Fermer">×</button><h2 id="info-title"></h2><div id="info-content"></div></dialog><div id="announce" class="sr-only" aria-live="polite"></div>`;
 
 $(".welcome-bottom span").textContent = "GUILLOTIÈRE / JEAN MACÉ / GERLAND";
 const hud = mountCabinetHud();
+const stopBaySmoke = mountBaySmoke($("#bay-smoke"));
 const ticketMap = mountTicketMap($(".ticket-body"));
 const openAgenda = mountAgenda($("#agenda"));
 $$("[data-agenda]").forEach((button) => button.addEventListener("click", openAgenda));
 const wheel = new ArcadeWheel($("#wheel"), {
   onTick: (p, i) => {
     sound.tick(p);
-    if (activePool[i]) {
-      $("#screen-hint").textContent = activePool[i].name;
+    const place = activePool[i];
+    const hint = $("#screen-hint");
+    if (place && hint.textContent !== (place.shortName ?? place.name)) {
+      hint.textContent = place.shortName ?? place.name;
       highlightPlace(i);
     }
   },
@@ -114,10 +174,12 @@ function filtered() {
     favorites: favoritesOnly ? favorites : null,
   });
 }
-function refreshPool({ renew = false } = {}) {
+function refreshPool({ renew = false, exclude = null } = {}) {
+  const candidates = filtered().filter(({ id }) => id !== exclude);
   activePool = renew
-    ? renewWheelPool(filtered(), recent, activePool)
-    : makeWheelPool(filtered(), recent);
+    ? renewWheelPool(candidates, recent, activePool)
+    : makeWheelPool(candidates, recent);
+  $("#cabinet").classList.remove("has-winner", "printing");
   poolDirty = false;
   wheel.setPlaces(activePool, mode);
   $("#wheel-legend").innerHTML = activePool
@@ -145,7 +207,7 @@ let cabinetAnimationTimer;
 function animateCabinet(kind) {
   clearTimeout(cabinetAnimationTimer);
   const cabinet = $("#cabinet");
-  cabinet.classList.remove("renewing", "changing-activity");
+  cabinet.classList.remove("renewing", "changing-activity", "arriving");
   void cabinet.offsetWidth;
   cabinet.classList.add(kind);
   cabinetAnimationTimer = setTimeout(() => cabinet.classList.remove(kind), 550);
@@ -193,6 +255,7 @@ function chooseMode(value) {
   if (spinning) return;
   cancelCharge();
   mode = value;
+  keptTicket = null;
   hud.resetPanels();
   category = "Tout";
   district = "Tout le 7e";
@@ -213,6 +276,7 @@ function chooseMode(value) {
   sound.setMode(mode);
   sound.select();
   refresh();
+  animateCabinet("arriving");
   requestAnimationFrame(() => {
     wheel.resize?.();
     $("#launch").focus({ preventScroll: true });
@@ -250,6 +314,7 @@ function beginCharge() {
   charging = true;
   chargeStart = performance.now();
   sound.grab();
+  $("#cabinet").classList.add("charging");
   $("#launch").classList.add("pressed");
   $("#screen-status").textContent = "TIRE PUIS RELÂCHE";
   const frame = () => {
@@ -258,21 +323,24 @@ function beginCharge() {
     const p = pointer
       ? leverPull
       : Math.min(1, (performance.now() - chargeStart) / 1400);
-    $("#power").style.width = `${p * 100}%`;
-    $("#launch").style.setProperty("--pull", p);
-    $(".power-track").setAttribute("aria-valuenow", Math.round(p * 100));
+    paintCharge(p);
     chargeFrame = requestAnimationFrame(frame);
   };
   frame();
+}
+function paintCharge(power) {
+  $("#power").style.width = `${power * 100}%`;
+  $("#cabinet").style.setProperty("--charge", power);
+  $("#launch").style.setProperty("--pull", power);
+  $(".power-track").setAttribute("aria-valuenow", Math.round(power * 100));
 }
 function cancelCharge() {
   charging = false;
   cancelAnimationFrame(chargeFrame);
   $("#launch").classList.remove("pressed");
   $("#launch").removeAttribute("data-pointer");
-  $("#launch").style.setProperty("--pull", 0);
-  $("#power").style.width = "0%";
-  $(".power-track").setAttribute("aria-valuenow", "0");
+  $("#cabinet").classList.remove("charging");
+  paintCharge(0);
   if (!spinning) $("#screen-status").textContent = "PRÊT À SORTIR";
 }
 function releaseCharge() {
@@ -289,17 +357,17 @@ function launch(power = 0.4) {
   lock(true);
   $("#lever-caption").textContent = "TIRAGE";
   $("#screen-status").textContent = "TIRAGE EN COURS";
-  $("#screen-hint").textContent = "LA ROUE RALENTIT.";
+  $("#screen-hint").textContent = "LA ROUE TOURNE.";
   $("#announce").textContent = "La roue tourne.";
   wheel.spin(chooseIndex(activePool.length), power);
 }
 function reveal(p) {
   lastDraw = p;
   poolDirty = true;
-  lock(false);
+  $("#cabinet").classList.add("has-winner", "printing");
   $("#lever-caption").textContent = "ÉLAN";
   $("#screen-status").textContent = "ADRESSE TROUVÉE";
-  $("#screen-hint").textContent = p.name;
+  $("#screen-hint").textContent = p.shortName ?? p.name;
   highlightPlace(activePool.findIndex((place) => place.id === p.id));
   lastResult = p;
   recent = [...recent.filter((id) => id !== p.id), p.id].slice(-3);
@@ -311,26 +379,21 @@ function reveal(p) {
   $("#show-last").hidden = false;
   sound.win();
   $("#announce").textContent = `Prochaine sortie : ${p.name}. ${p.address}`;
-  burst();
-  setTimeout(() => openPlace(p, true), 450);
-}
-function burst() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  $("#confetti").replaceChildren();
-  for (let i = 0; i < 24; i++) {
-    const p = document.createElement("i");
-    p.style.cssText = `--x:${Math.random() * 100}%;--delay:${Math.random() * 0.2}s;--c:${["#e8b462", "#96aaa1", "#c1bbd6"][i % 3]};--r:${Math.random() * 300}deg`;
-    $("#confetti").append(p);
-  }
-  setTimeout(() => $("#confetti").replaceChildren(), 1800);
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => {
+    $("#cabinet").classList.remove("printing");
+    lock(false);
+    openPlace(p, true);
+  }, reducedMotion ? 0 : 1080);
 }
 function openPlace(p, won = false) {
-  previousFocus = document.activeElement;
+  const dialog = $("#result");
+  if (!dialog.open) previousFocus = document.activeElement;
   lastResult = p;
-  $("#result-label").textContent = won
-    ? "RÉSULTAT DU TIRAGE"
-    : "LE CARNET DU 7e";
-  $("#result-category").textContent = `${p.district} / ${p.category}`;
+  $("#result-label").textContent = won ? "Résultat du tirage" : "Carnet du 7e";
+  $("#result-category").textContent = `${p.district} · ${p.category}`;
+  $("#again").disabled = !hasAlternative(p);
+  updateTicketComparison(p);
   $("#result-title").textContent = p.name;
   $("#result-description").textContent = p.description;
   $("#result-address").textContent = p.address;
@@ -343,9 +406,27 @@ function openPlace(p, won = false) {
       ? "Statut à revérifier. Ce lieu est exclu des tirages."
       : "Vérifie les horaires et la programmation avant de partir.";
   $("#favorite-result").textContent = favorites.includes(p.id)
-    ? "★ RETIRER DES FAVORIS"
-    : "☆ GARDER L’ADRESSE";
-  $("#result").showModal();
+    ? "Retirer des favoris"
+    : "Ajouter aux favoris";
+  dialog.scrollTop = 0;
+  if (!dialog.open) dialog.showModal();
+}
+
+function hasAlternative(place) {
+  return filtered().some((candidate) => candidate.id !== place.id && candidate.available !== false);
+}
+
+function updateTicketComparison(place) {
+  const pair = [keptTicket, lastDraw];
+  const show = pair.every(Boolean) && pair[0].id !== pair[1].id &&
+    pair.some((candidate) => candidate.id === place.id);
+  $("#ticket-compare").hidden = !show;
+  if (!show) return;
+  ["#compare-kept", "#compare-draw"].forEach((selector, index) => {
+    const button = $(selector);
+    button.textContent = pair[index].name;
+    button.setAttribute("aria-pressed", String(pair[index].id === place.id));
+  });
 }
 function toggleFavorite(id) {
   favorites = favorites.includes(id)
@@ -355,9 +436,10 @@ function toggleFavorite(id) {
   renderDirectory();
   if (lastResult)
     $("#favorite-result").textContent = favorites.includes(lastResult.id)
-      ? "★ RETIRER DES FAVORIS"
-      : "☆ GARDER L’ADRESSE";
+      ? "Retirer des favoris"
+      : "Ajouter aux favoris";
   if (!spinning) refreshPool();
+  if (lastResult) $("#again").disabled = !hasAlternative(lastResult);
 }
 function closeResult() {
   $("#result").close();
@@ -408,9 +490,6 @@ $("#launch").addEventListener("pointerdown", (e) => {
 $("#launch").addEventListener("pointermove", (e) => {
   if (!charging || !$("#launch").hasPointerCapture(e.pointerId)) return;
   leverPull = Math.max(0, Math.min(1, (e.clientY - leverStartY) / 100));
-  $("#launch").style.setProperty("--pull", leverPull);
-  $("#power").style.width = leverPull * 100 + "%";
-  $(".power-track").setAttribute("aria-valuenow", Math.round(leverPull * 100));
 });
 $("#launch").addEventListener("pointerup", () => {
   if (!charging) return;
@@ -507,10 +586,14 @@ $("#result").addEventListener("close", () => {
   previousFocus?.focus({ preventScroll: true });
 });
 $("#again").onclick = () => {
+  if (!lastResult || spinning || !hasAlternative(lastResult)) return;
+  keptTicket = lastResult;
   closeResult();
-  refreshPool();
+  refreshPool({ exclude: keptTicket.id });
   launch();
 };
+$("#compare-kept").onclick = () => openPlace(keptTicket, keptTicket === lastDraw);
+$("#compare-draw").onclick = () => openPlace(lastDraw, true);
 $("#show-last").onclick = () => openPlace(lastDraw || lastResult);
 $("#sound").onclick = () => {
   sound.setEnabled(!sound.enabled);
@@ -553,4 +636,9 @@ for (const d of $$("dialog"))
     }
   });
 document.body.dataset.mode = "choose";
-if (import.meta.hot) import.meta.hot.dispose(() => wheel.dispose());
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    stopBaySmoke();
+    wheel.dispose();
+  });
+}

@@ -48,9 +48,11 @@ Les dates de consultation et les liens sont indiqués dans « À propos & source
 - `src/data.js` : catalogue et règles pures testables.
 - `src/sound.js` : synthèse sonore locale.
 - `src/style.css`, `src/cabinet.css` et `src/arcade.css` : structure, deux variantes de borne, commandes mécaniques, éclairage et mise en page responsive.
-- `public/assets/arcade-abstract-v1.png` : fond abstrait pixel art généré avec le mode intégré imagegen.
+- `public/assets/retro-bay.png` : décor de la baie technique.
+- `public/assets/hub-sun.png`, `hub-moon.png` et `panel-grain.png` : badges pixel art et texture des panneaux.
+- `public/assets/arcade-abstract-v1.png` : texture des cartes de choix et du bandeau de la borne.
 - `public/assets/fonts/` : Press Start 2P, licence SIL OFL incluse.
-- `docs/arcade-abstract-asset.md` : prompt du décor intégré. Les anciens décors et leurs prompts sont conservés comme références.
+- `docs/retro-bay-asset.md` : prompt du décor de la baie technique.
 
 Three.js est sous licence MIT. Press Start 2P est sous licence SIL OFL, incluse avec la police.
 
