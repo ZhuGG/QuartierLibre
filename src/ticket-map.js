@@ -1,3 +1,5 @@
+import { findDetour } from "./detour.js";
+
 const osm = "https://www.openstreetmap.org";
 
 async function locate(address, signal) {
@@ -24,31 +26,43 @@ async function locate(address, signal) {
   return { lon, lat };
 }
 
-export function mountTicketMap(details) {
-  const status = details.querySelector("#map-status");
-  const frame = details.querySelector("#map-frame");
-  const link = details.querySelector("#osm-link");
+export function mountTicketMap(container) {
+  const status = container.querySelector("#map-status");
+  const frame = container.querySelector("#map-frame");
+  const link = container.querySelector("#osm-link");
+  const detourButton = container.querySelector("#detour-button");
+  const detourStatus = container.querySelector("#detour-status");
+  const detourLink = container.querySelector("#detour-link");
   const coordinates = new Map();
-  let place;
+  let destination;
+  let detourRequest;
   let request;
 
   function clear() {
     request?.abort();
     request = undefined;
-    details.open = false;
     frame.replaceChildren();
     status.textContent = "";
-    place = undefined;
+    detourRequest?.abort();
+    detourRequest = undefined;
+    destination = undefined;
+    detourButton.disabled = false;
+    detourStatus.textContent = "";
+    detourLink.hidden = true;
   }
 
-  details.addEventListener("toggle", async () => {
-    if (!details.open || !place || request || frame.childElementCount) return;
-    const { address, name } = place;
+  async function setPlace({ address, name }) {
+    clear();
+    link.href = `${osm}/search?query=${encodeURIComponent(address)}`;
     const controller = new AbortController();
     request = controller;
     status.textContent = "Recherche de l’adresse…";
+    const pointRequest = coordinates.has(address)
+      ? Promise.resolve(coordinates.get(address))
+      : locate(address, controller.signal);
+    destination = { pointRequest, name };
     try {
-      const point = coordinates.get(address) ?? await locate(address, controller.signal);
+      const point = await pointRequest;
       if (controller.signal.aborted) return;
       coordinates.set(address, point);
       const { lon, lat } = point;
@@ -69,14 +83,43 @@ export function mountTicketMap(details) {
     } finally {
       if (request === controller) request = undefined;
     }
+  }
+
+  detourButton.addEventListener("click", async () => {
+    if (!destination || detourRequest) return;
+    const controller = new AbortController();
+    detourRequest = controller;
+    detourButton.disabled = true;
+    detourLink.hidden = true;
+    detourStatus.textContent = "Recherche autour du lieu…";
+    const { pointRequest, name } = destination;
+    try {
+      const point = await pointRequest;
+      if (controller.signal.aborted) return;
+      const nearby = await findDetour(
+        point,
+        name,
+        AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
+      );
+      if (controller.signal.aborted) return;
+      if (!nearby) {
+        detourStatus.textContent = "Aucun détour trouvé dans les environs.";
+        return;
+      }
+      detourStatus.textContent = `À ${Math.round(nearby.dist / 10) * 10} m à vol d’oiseau`;
+      detourLink.href = `https://fr.wikipedia.org/?curid=${nearby.pageid}`;
+      detourLink.textContent = `${nearby.title} · Wikipédia`;
+      detourLink.hidden = false;
+    } catch {
+      if (!controller.signal.aborted)
+        detourStatus.textContent = "Les détours sont indisponibles pour le moment.";
+    } finally {
+      if (detourRequest === controller) {
+        detourRequest = undefined;
+        detourButton.disabled = false;
+      }
+    }
   });
 
-  return {
-    clear,
-    setPlace(next) {
-      clear();
-      place = next;
-      link.href = `${osm}/search?query=${encodeURIComponent(next.address)}`;
-    },
-  };
+  return { clear, setPlace };
 }

@@ -43,7 +43,7 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
 }
 .cabinet-toolbar {
   display: grid;
-  grid-template-columns: 1.3fr 1.3fr 1fr 42px;
+  grid-template-columns: 1fr 1.15fr 0.95fr 1.25fr;
   gap: 8px;
   border: 6px solid var(--case-deep);
   border-top: 0;
@@ -86,9 +86,6 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
     inset 1px 2px #c4cca64f,
     0 3px #162a33,
     0 0 9px #c4cca628;
-}
-.cabinet-toolbar #help {
-  font-size: 19px;
 }
 .cabinet-toolbar #show-directory[aria-expanded="true"] {
   background: #496b65;
@@ -743,7 +740,7 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   .cabinet-toolbar {
     padding: 8px 10px;
     gap: 7px;
-    grid-template-columns: 1.3fr 1.2fr 1fr 36px;
+    grid-template-columns: 1fr 1.15fr 0.95fr 1.25fr;
   }
   .cabinet-toolbar button {
     min-height: 38px;
@@ -752,9 +749,6 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   }
   .cabinet-toolbar #sound {
     font-size: 10px;
-  }
-  .cabinet-toolbar #help {
-    font-size: 18px;
   }
   .cabinet-filters > summary {
     padding: 9px 12px;
@@ -1115,10 +1109,6 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   font: 600 14px/1.5 system-ui, sans-serif;
 }
 
-.ticket-map summary {
-  cursor: pointer;
-}
-
 .ticket-map a {
   display: inline-block;
   margin-top: 6px;
@@ -1133,7 +1123,7 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
 #map-frame iframe {
   display: block;
   width: 100%;
-  height: 220px;
+  height: clamp(160px, 30svh, 260px);
   margin-top: 8px;
   border: 1px solid currentColor;
 }
@@ -1246,4 +1236,81 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   .cabinet-hud .session-stamp {
     gap: 2px;
   }
+}
+
+.agenda-trigger {
+  display: block;
+  margin: 12px auto 0;
+  padding: 9px 14px;
+  min-height: 44px;
+  border: 2px solid #859e99;
+  border-radius: 3px;
+  background: #203640;
+  color: #fff2d0;
+  font: 650 14px/1.3 system-ui, sans-serif;
+}
+
+.agenda-trigger:hover {
+  background: #304b53;
+}
+
+.detour a[hidden],
+.ticket-map a[hidden],
+.agenda-trigger[hidden] {
+  display: none;
+}
+
+.detour {
+  margin-top: 10px;
+  font: 600 14px/1.5 system-ui, sans-serif;
+}
+
+.detour .text-button {
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 1px solid currentColor;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+}
+
+#detour-status {
+  margin: 0;
+}
+
+#detour-status:empty {
+  display: none;
+}
+
+#agenda {
+  max-height: 86svh;
+  overflow: auto;
+}
+
+#agenda-event-name {
+  margin-top: 10px;
+  font: 700 1.25rem/1.25 system-ui, sans-serif;
+}
+
+#agenda-again {
+  margin-left: 0;
+}
+
+
+.cabinet-hud #choose > .agenda-trigger {
+  margin: 0 auto 16px;
+}
+
+.cabinet-credits #help {
+  min-height: 30px;
+  min-width: 0;
+  padding: 4px 6px;
+  color: #f2e6cf;
+  font: 600 12px/1.4 system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.detour a {
+  color: inherit;
+  text-decoration: underline;
 }

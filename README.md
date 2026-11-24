@@ -19,7 +19,7 @@ Ouvrir http://127.0.0.1:5187. `npm run build` produit `dist/`, à servir par HTT
 
 ## Jouer
 
-Choisir Soleil (journée) ou Lune (soirée), puis le quartier et l’activité. Tirer le levier vers le bas et relâcher, au doigt ou à la souris. Un clic simple sur le levier fonctionne aussi. Au clavier, maintenir Espace puis relâcher. Flèches gauche/droite ou sélecteur rotatif : changer d’activité. AUTRES LIEUX renouvelle les six adresses en conservant les filtres et privilégie celles absentes de la roue. Si moins de six autres lieux existent, la sélection est complétée avec les lieux déjà affichés ; si aucun autre n’existe, leur ordre change. RESET retire les filtres. Le son est désactivé par défaut ; SON ON active les sons synthétisés par Web Audio.
+Choisir Soleil (journée) ou Lune (soirée), puis le quartier et l’activité. Tirer le levier vers le bas et relâcher, au doigt ou à la souris. Un clic simple sur le levier fonctionne aussi. Au clavier, maintenir Espace puis relâcher. Flèches gauche/droite ou sélecteur rotatif : changer d’activité. AUTRES LIEUX renouvelle les six adresses en conservant les filtres et privilégie celles absentes de la roue. Si moins de six autres lieux existent, la sélection est complétée avec les lieux déjà affichés ; si aucun autre n’existe, leur ordre change. RESET retire les filtres. Le son est désactivé par défaut ; SON ON active les sons du levier, du cliquet de la roue et du ticket. Les timbres diffèrent entre Soleil et Lune et sont synthétisés dans le navigateur.
 
 L’amplitude du levier modifie l’élan, la durée et le nombre de tours. Le résultat est tiré uniformément parmi les lieux affichés. Une sélection aléatoire de six lieux maximum maintient la roue lisible. Les noms suivent la courbe de chaque segment, sur un ou deux arcs, en caractères gras. Le lettrage reste solidaire de la roue et la liste numérotée reprend les noms complets sous l’écran. Le nom sous le pointeur est repris en grand. Les trois dernières adresses sont écartées lorsque d’autres choix existent. Les favoris, le compteur et ces derniers tirages restent dans le stockage local du navigateur. Le levier pivote vers le joueur et revient par un mouvement de ressort ; le rendu reste dans la largeur de la borne sur petit écran.
 
@@ -27,7 +27,9 @@ Les mouvements réduits du système sont respectés. En cas d’absence de WebGL
 
 Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dernier ticket sont intégrés à la borne. Le panneau Filtres s’ouvre à la demande ; le bouton Adresses affiche le catalogue sous les commandes. Sur mobile, la poignée et sa course restent à l’intérieur du meuble pour conserver son centrage. Les libellés fonctionnels utilisent une police plus lisible, tandis que les titres et les détails graphiques gardent le caractère pixel art.
 
-Le ticket propose une carte OpenStreetMap à la demande. L’adresse du lieu est convertie en coordonnées par la Géoplateforme de l’IGN. En cas d’échec, le lien de recherche OpenStreetMap reste disponible.
+La carte OpenStreetMap se charge à l’ouverture du ticket. L’adresse du lieu est convertie en coordonnées par la Géoplateforme de l’IGN. En cas d’échec, le lien de recherche OpenStreetMap reste disponible.
+
+« Un détour » propose un lieu décrit par Wikipédia à moins de 650 mètres du lieu tiré. La distance est à vol d’oiseau. Le tirage Ville Morte consulte son agenda public et propose une sortie dans le 7e ce soir ou parmi les sept prochains jours. Chaque suggestion renvoie à l’annonce originale.
 
 ## Données et extension
 

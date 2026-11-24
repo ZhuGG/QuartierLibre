@@ -15,8 +15,8 @@ export function mountCabinetHud() {
   catalogue.setAttribute("aria-expanded", "false");
   catalogue.setAttribute("aria-controls", "cabinet-directory");
   const help = find("#help");
-  help.textContent = "?";
-  toolbar.append(back, catalogue, find("#sound"), help);
+  help.textContent = "Aide";
+  toolbar.append(back, catalogue, find("#sound"), find("#cabinet-agenda"));
   cabinet.querySelector(".marquee").after(toolbar);
 
   const filters = document.createElement("details");
@@ -81,7 +81,7 @@ export function mountCabinetHud() {
   signature.textContent = "QUARTIER LIBRE · LYON 7e";
   const sources = find("#sources");
   sources.textContent = "Sources";
-  credits.append(signature, sources);
+  credits.append(signature, help, sources);
   directoryPanel.after(credits);
   find(".left-panel").remove();
   find(".right-panel").remove();

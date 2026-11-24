@@ -13,6 +13,7 @@ import {
 import { ArcadeWheel } from "./wheel.js";
 import { Sound } from "./sound.js";
 import { mountTicketMap } from "./ticket-map.js";
+import { mountAgenda } from "./agenda.js";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
@@ -68,6 +69,7 @@ $("#app").innerHTML = `
  <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
  <main>
   <section id="choose" class="choose" aria-labelledby="welcome-title"><h1 id="welcome-title" class="sr-only">Choisir une borne</h1>
+   <button type="button" class="agenda-trigger" data-agenda>Une sortie avec Ville Morte</button>
    <div class="choices"><button class="choice sun-choice" data-mode="sun" aria-label="Choisir la borne Soleil"><span class="choice-top">SERVICE DE JOUR <span>01 / S</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-sun" aria-hidden="true"></span><strong>SOLEIL</strong><span class="choice-copy">Cafés, restaurants, parcs et culture.</span></button><span class="choice-divider" aria-hidden="true">OU</span><button class="choice moon-choice" data-mode="moon" aria-label="Choisir la borne Lune"><span class="choice-top">SERVICE DE NUIT <span>02 / L</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-moon" aria-hidden="true"></span><strong>LUNE</strong><span class="choice-copy">Bars, concerts, restaurants et club.</span></button></div>
    <p class="welcome-bottom"><span>GUILLOTIÈRE / JEAN MACÉ / GERLAND</span><span>${places.length} ADRESSES</span></p>
   </section>
@@ -79,16 +81,20 @@ $("#app").innerHTML = `
     <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><span></span></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
    </article>
    <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
+   <button type="button" id="cabinet-agenda" data-agenda>Ville Morte</button>
    <p class="keyboard-note">CLAVIER : <kbd>ESPACE</kbd> ABAISSER / RELÂCHER <span>·</span> <kbd>←</kbd> <kbd>→</kbd> CHANGER D’ENVIE</p>
    <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources indiquées sur les fiches. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
   </section>
  </main><footer><span>QUARTIER LIBRE — SOLEIL / LUNE</span><span>UNE SÉLECTION DU 7e ARRONDISSEMENT</span><button id="sources" class="text-button">À PROPOS & SOURCES ↗</button></footer>
- <dialog id="result" class="result"><button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button><div class="ticket-body"><p class="eyebrow" id="result-label">RÉSULTAT DU TIRAGE</p><span id="result-category"></span><h2 id="result-title"></h2><p id="result-description"></p><address id="result-address"></address><div class="ticket-perf"></div><div class="ticket-links"><a id="maps" target="_blank" rel="noopener noreferrer">Y ALLER ↗</a><a id="official" target="_blank" rel="noopener noreferrer">INFOS DU LIEU ↗</a></div><details id="ticket-map" class="ticket-map"><summary>Afficher la carte</summary><p id="map-status" role="status"></p><div id="map-frame"></div><a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a></details><p id="result-note" class="result-note"></p><button id="favorite-result" class="text-button"></button><button id="again" class="ticket-again">UN AUTRE TOUR ↻</button><div class="barcode" aria-hidden="true"></div><p class="ticket-code">LYON 7e / QUARTIER LIBRE / SÉLECTION LOCALE</p></div></dialog>
+ <dialog id="result" class="result"><button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button><div class="ticket-body"><p class="eyebrow" id="result-label">RÉSULTAT DU TIRAGE</p><span id="result-category"></span><h2 id="result-title"></h2><p id="result-description"></p><address id="result-address"></address><div class="ticket-perf"></div><div class="ticket-links"><a id="maps" target="_blank" rel="noopener noreferrer">Y ALLER ↗</a><a id="official" target="_blank" rel="noopener noreferrer">INFOS DU LIEU ↗</a></div><section class="detour" aria-label="Découvrir les environs"><button id="detour-button" type="button" class="text-button">Un détour</button><p id="detour-status" role="status"></p><a id="detour-link" target="_blank" rel="noopener noreferrer" hidden></a></section><section id="ticket-map" class="ticket-map" aria-label="Carte du lieu"><p id="map-status" role="status"></p><div id="map-frame"></div><a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a></section><p id="result-note" class="result-note"></p><button id="favorite-result" class="text-button"></button><button id="again" class="ticket-again">UN AUTRE TOUR ↻</button><div class="barcode" aria-hidden="true"></div><p class="ticket-code">LYON 7e / QUARTIER LIBRE / SÉLECTION LOCALE</p></div></dialog>
+ <dialog id="agenda" class="info-dialog" aria-labelledby="agenda-title"><button id="close-agenda" class="dialog-close" aria-label="Fermer">×</button><h2 id="agenda-title">Tirage Ville Morte</h2><p id="agenda-status" role="status"></p><article id="agenda-card" hidden><h3 id="agenda-event-name"></h3><p id="agenda-event-date"></p><p id="agenda-event-place"></p><a id="agenda-event-link" target="_blank" rel="noopener noreferrer">Voir l’annonce sur Ville Morte</a></article><button id="agenda-again" class="agenda-trigger" type="button" hidden>Autre événement</button><p><a href="https://agenda.villemorte.fr/" target="_blank" rel="noopener noreferrer">Tout l’agenda Ville Morte</a></p></dialog>
  <dialog id="info" class="info-dialog"><button id="close-info" class="dialog-close" aria-label="Fermer">×</button><h2 id="info-title"></h2><div id="info-content"></div></dialog><div id="announce" class="sr-only" aria-live="polite"></div>`;
 
 $(".welcome-bottom span").textContent = "GUILLOTIÈRE / JEAN MACÉ / GERLAND";
 const hud = mountCabinetHud();
-const ticketMap = mountTicketMap($("#ticket-map"));
+const ticketMap = mountTicketMap($(".ticket-body"));
+const openAgenda = mountAgenda($("#agenda"));
+$$("[data-agenda]").forEach((button) => button.addEventListener("click", openAgenda));
 const wheel = new ArcadeWheel($("#wheel"), {
   onTick: (p, i) => {
     sound.tick(p);
@@ -204,6 +210,7 @@ function chooseMode(value) {
   $("#machine-icon").textContent = mode === "sun" ? "☀" : "☾";
   $("#serial-mode").textContent = mode === "sun" ? "S" : "L";
   $("#screen-status").textContent = "PRÊT À SORTIR";
+  sound.setMode(mode);
   sound.select();
   refresh();
   requestAnimationFrame(() => {
@@ -242,7 +249,7 @@ function beginCharge() {
   if (poolDirty) refreshPool();
   charging = true;
   chargeStart = performance.now();
-  sound.unlock();
+  sound.grab();
   $("#launch").classList.add("pressed");
   $("#screen-status").textContent = "TIRE PUIS RELÂCHE";
   const frame = () => {
@@ -278,7 +285,7 @@ function launch(power = 0.4) {
   if (spinning || !mode) return;
   if (poolDirty) refreshPool();
   if (!activePool.length) return;
-  sound.unlock();
+  sound.launch(power);
   lock(true);
   $("#lever-caption").textContent = "TIRAGE";
   $("#screen-status").textContent = "TIRAGE EN COURS";
@@ -506,9 +513,8 @@ $("#again").onclick = () => {
 };
 $("#show-last").onclick = () => openPlace(lastDraw || lastResult);
 $("#sound").onclick = () => {
-  sound.enabled = !sound.enabled;
+  sound.setEnabled(!sound.enabled);
   storage.set("sl-sound", sound.enabled);
-  sound.unlock();
   $("#sound").textContent = `SON ${sound.enabled ? "ON" : "OFF"}`;
   $("#sound").setAttribute("aria-pressed", String(sound.enabled));
   $("#sound").setAttribute(
