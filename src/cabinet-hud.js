@@ -1,8 +1,18 @@
+import { ALL_DISTRICTS } from "./data.js";
+
 // Move the existing controls rather than duplicating them: all game handlers,
 // labels and keyboard controls keep a single source of truth.
 export function mountCabinetHud() {
   const find = (selector) => document.querySelector(selector);
   const cabinet = find("#cabinet");
+  cabinet.insertAdjacentHTML("afterbegin", `
+    <div class="cabinet-shell" aria-hidden="true">
+      <i class="shell-side shell-left"></i>
+      <i class="shell-side shell-right"></i>
+      <i class="shell-floor"></i>
+    </div>`);
+  cabinet.querySelector(".screen").insertAdjacentHTML("beforeend",
+    '<div class="glass-reflection" aria-hidden="true"></div>');
   const toolbar = document.createElement("nav");
   toolbar.className = "cabinet-toolbar";
   toolbar.setAttribute("aria-label", "Commandes de la borne");
@@ -22,7 +32,7 @@ export function mountCabinetHud() {
   const filters = document.createElement("details");
   filters.className = "cabinet-filters";
   filters.id = "cabinet-filters";
-  filters.innerHTML = `<summary><span class="filter-readout"><b id="hud-activity">Tout</b><span id="hud-district">Tout le 7e</span></span><span class="filter-caption">Filtres <i aria-hidden="true">⌄</i></span></summary><div class="filter-panel"></div>`;
+  filters.innerHTML = `<summary><span class="filter-readout"><b id="hud-activity">Tout</b><span><span id="hud-district">${ALL_DISTRICTS}</span> · <span id="hud-eligible"></span></span></span><span class="filter-caption">Filtres <i aria-hidden="true">⌄</i></span></summary><div class="filter-panel"></div>`;
   const panel = filters.querySelector(".filter-panel");
   const districtLabel = document.createElement("label");
   districtLabel.textContent = "Quartier";
@@ -40,7 +50,7 @@ export function mountCabinetHud() {
   dock.className = "lever-dock";
   dock.append(find("#launch"));
   find(".control-deck").append(dock);
-  find(".button-caption").textContent = "Espace au clavier";
+  find(".button-caption").textContent = "Tire ou maintiens";
 
   const wheelDetails = document.createElement("details");
   wheelDetails.className = "wheel-details";
@@ -89,14 +99,15 @@ export function mountCabinetHud() {
   find(".keyboard-note").remove();
   document.body.classList.add("cabinet-hud");
   return {
-    sync({ category, district }) {
+    sync({ category, district, eligible }) {
       find("#hud-activity").textContent =
         category === "Tout" ? "Toutes les activités" : category;
       find("#hud-district").textContent = district;
+      find("#hud-eligible").textContent = eligible > 1 ? `${eligible} lieux éligibles` : `${eligible} lieu éligible`;
       filters.classList.toggle(
         "has-filters",
         category !== "Tout" ||
-          district !== "Tout le 7e" ||
+          district !== ALL_DISTRICTS ||
           favorites.getAttribute("aria-pressed") === "true",
       );
     },

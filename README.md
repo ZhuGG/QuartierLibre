@@ -17,6 +17,12 @@ npm run dev
 
 Ouvrir http://127.0.0.1:5187. `npm run build` produit `dist/`, à servir par HTTP. `npm run preview` sert le build sur le port 4187. `npm test` vérifie le tirage, les filtres, les exclusions et l’alignement de la roue.
 
+## Installer
+
+Ouvrir Quartier Libre dans le navigateur. Utiliser « Installer » quand le bouton apparaît ou passer par le menu du navigateur. Sur iPhone, dans Safari, choisir Partager, puis « Sur l’écran d’accueil » et « Ouvrir comme app web » si l’option est proposée.
+
+Après le premier chargement en ligne, les deux bornes, le carnet et les tirages restent accessibles hors connexion. La carte, l’agenda Ville Morte et « Un détour » utilisent des services en ligne. Le service worker est activé dans le build de production, sur une URL HTTPS ou dans un aperçu local sur `127.0.0.1`.
+
 ## Jouer
 
 Choisir Soleil (journée) ou Lune (soirée), puis le quartier et l’activité. Tirer le levier vers le bas et relâcher, au doigt ou à la souris. Un clic simple sur le levier fonctionne aussi. Au clavier, maintenir Espace puis relâcher. Flèches gauche/droite ou sélecteur rotatif : changer d’activité. AUTRES LIEUX renouvelle les six adresses en conservant les filtres et privilégie celles absentes de la roue. Si moins de six autres lieux existent, la sélection est complétée avec les lieux déjà affichés ; si aucun autre n’existe, leur ordre change. RESET retire les filtres. Le son est désactivé par défaut ; SON ON active les sons du levier, du cliquet de la roue et du ticket. Les timbres diffèrent entre Soleil et Lune et sont synthétisés dans le navigateur.
@@ -33,9 +39,9 @@ La carte OpenStreetMap se charge à l’ouverture du ticket. L’adresse du lieu
 
 ## Données et extension
 
-Les données sont isolées dans `src/data.js` : identifiant, nom, quartier, catégorie, modes, adresse, description, URL source, date de consultation et disponibilité. Pour élargir ensuite le périmètre, ajouter les données et les filtres de quartier ; le moteur de jeu reste indépendant.
+Les données sont isolées dans `src/data.js` et `src/places-extra.js` : identifiant, nom, quartier, catégorie, modes, adresse, description, URL source, date de consultation et disponibilité. Pour élargir ensuite le périmètre, ajouter les données et les filtres de quartier ; le moteur de jeu reste indépendant.
 
-28 lieux sont intégrés, dont les sept exemples demandés. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit est inclus dans les tirages Soleil et Lune.
+66 lieux sont intégrés, dont la MPT des Rancy dans le 3e. Le filtre « Tout le 7e » retire cette exception de proximité. Le Bouillon Paradis figure au carnet, hors tirage tant que son ouverture reste à vérifier. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit est inclus dans les tirages Soleil et Lune.
 
 Les dates de consultation et les liens sont indiqués dans « À propos & sources » et dans les données. Ne pas confondre une date de consultation avec une garantie d’ouverture actuelle.
 

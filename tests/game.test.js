@@ -111,9 +111,10 @@ test("la rotation accélère puis ralentit sans retour en arrière", () => {
       spinProgress(0.5) - spinProgress(0.49),
   );
 });
-test("tous les lieux sont sourcés dans le 7e et tous les exemples demandés existent", () => {
+test("le catalogue contient des adresses uniques et sourcées, avec les Rancy comme exception", () => {
+  assert.equal(new Set(places.map((p) => p.id)).size, places.length);
   for (const p of places) {
-    assert.ok(p.address.includes("69007"));
+    assert.ok(p.address.includes(p.id === "rancy" ? "69003" : "69007"));
     assert.ok(p.source.startsWith("https://"));
   }
   for (const id of [
@@ -124,6 +125,12 @@ test("tous les lieux sont sourcés dans le 7e et tous les exemples demandés exi
     "bouclard",
     "overdrive",
     "basement",
+    "rancy",
+    "pho-69",
+    "fujiyama-55",
+    "bouillon-paradis",
+    "au-janis",
+    "coole",
   ])
     assert.ok(places.some((p) => p.id === id));
 });
@@ -135,4 +142,14 @@ test("le Court-Circuit participe aux tirages Soleil et Lune et au renouvellement
     assert.deepEqual(renewWheelPool(list).map((p) => p.id), ["court"]);
     assert.deepEqual(makeWheelPool(list, ["court"]).map((p) => p.id), ["court"]);
   }
+});
+
+test("les Rancy sont tirables par défaut mais exclus du filtre strict Lyon 7e", () => {
+  const query = "MPT des Rancy";
+  assert.deepEqual(makeWheelPool(filterPlaces(places, { mode: "sun", query })).map(({ id }) => id), ["rancy"]);
+  assert.deepEqual(filterPlaces(places, { mode: "sun", district: "Tout le 7e", query }), []);
+  assert.deepEqual(filterPlaces(places, { mode: "sun", query: "Koolé" }).map(({ id }) => id), ["coole"]);
+  const bouillon = filterPlaces(places, { mode: "moon", query: "Bouillon Paradis" });
+  assert.equal(bouillon.length, 1);
+  assert.deepEqual(makeWheelPool(bouillon), []);
 });

@@ -1,3 +1,7 @@
+import { newPlaces } from "./places-extra.js";
+
+export const ALL_DISTRICTS = "7e et alentours";
+
 export const places = [
   {
     id: "commune",
@@ -361,6 +365,7 @@ export const places = [
     checked: "2026-11-24",
     shortName: "Piscine du Rhône",
   },
+  ...newPlaces,
 ].map((p) => ({ checked: "2026-11-17", origin: "Sélection sourcée", ...p }));
 export const normalize = (s) =>
   s
@@ -372,20 +377,20 @@ export function filterPlaces(
   {
     mode,
     category = "Tout",
-    district = "Tout le 7e",
+    district = ALL_DISTRICTS,
     query = "",
     favorites = null,
   },
 ) {
+  const search = normalize(query.trim());
   return list.filter(
     (p) =>
       p.modes.includes(mode) &&
       (category === "Tout" || p.category === category) &&
-      (district === "Tout le 7e" || p.district === district) &&
+      (district === ALL_DISTRICTS ||
+        (district === "Tout le 7e" ? /\b69007\b/.test(p.address) : p.district === district)) &&
       (!favorites || favorites.includes(p.id)) &&
-      normalize(p.name + " " + p.address + " " + p.category).includes(
-        normalize(query),
-      ),
+      (!search || normalize([p.name, p.address, p.category, ...(p.aliases ?? [])].join(" ")).includes(search)),
   );
 }
 export function chooseIndex(length, random = Math.random) {

@@ -5,10 +5,38 @@ import { targetRotation, spinProgress } from "./data.js";
 const LAMP_COUNT = 48;
 const TAU = Math.PI * 2;
 const FINISH_MS = 230;
+const WHEEL_RADIUS = 3.04;
+const MAX_WHEEL_ADVANCE = 0.41;
 const WHEEL_FINISH = {
-  sun: { metal: "#9c7350", signal: "#ffbf75", idle: "#48352a", lamp: "#ffbd6e" },
-  moon: { metal: "#668d9f", signal: "#a1dfed", idle: "#263d4d", lamp: "#80cbea" },
+  sun: { metal: "#bb8551", plate: "#47332a", signal: "#ffbf75", idle: "#422519", lamp: "#ffbd6e" },
+  moon: { metal: "#80a8c9", plate: "#253758", signal: "#9aeeff", idle: "#1c354b", lamp: "#80cbea" },
 };
+
+function reflectionTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const ambient = ctx.createLinearGradient(0, 0, 0, 256);
+  ambient.addColorStop(0, "#898e9a");
+  ambient.addColorStop(0.43, "#394655");
+  ambient.addColorStop(0.67, "#19212c");
+  ambient.addColorStop(1, "#352521");
+  ctx.fillStyle = ambient;
+  ctx.fillRect(0, 0, 512, 256);
+  ctx.fillStyle = "#fff1da";
+  ctx.fillRect(103, 32, 132, 26);
+  ctx.fillRect(114, 65, 102, 6);
+  ctx.fillStyle = "#b3e8ff";
+  ctx.fillRect(366, 67, 22, 105);
+  ctx.fillStyle = "#e5f6ff";
+  ctx.fillRect(310, 110, 118, 8);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 export class ArcadeWheel {
   constructor(host, { onTick = () => {}, onDone = () => {} } = {}) {
     this.host = host;
@@ -34,14 +62,16 @@ export class ArcadeWheel {
     host.append(this.renderer.domElement);
     this.renderer.domElement.setAttribute("aria-hidden", "true");
     this.scene = new THREE.Scene();
+    this.reflection = reflectionTexture();
+    this.scene.environment = this.reflection;
     this.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
     this.camera.position.set(0, -0.4, 11.8);
     this.camera.lookAt(0, 0, 0);
-    this.scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x23264b, 3));
+    this.scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x302045, 1.5));
     [
-      [0xfff2cd, 35, [-3, 5, 7]],
-      [0xa0bdff, 26, [4, 1, 5]],
-      [0xffb763, 15, [0, -5, 2]],
+      [0xfff2cd, 57, [-3, 5, 6]],
+      [0xa0d6ff, 43, [4, 1, 4]],
+      [0xffb763, 16, [0, -4, 4]],
     ].forEach(([color, intensity, position], index) => {
       const light = new THREE.PointLight(color, intensity, 25);
       light.position.set(...position);
@@ -52,10 +82,11 @@ export class ArcadeWheel {
       }
     });
     this.root = new THREE.Group();
-    this.root.rotation.x = 0.1;
+    this.root.rotation.set(0.19, -0.23, 0);
     this.scene.add(this.root);
     this.rotor = new THREE.Group();
     this.root.add(this.rotor);
+    this.hasResult = false;
     this.mat = (color, metalness = 0, roughness = 0.4) =>
       new THREE.MeshStandardMaterial({ color, metalness, roughness });
     const ring = (r, t, z, mat) => {
@@ -64,51 +95,82 @@ export class ArcadeWheel {
       this.root.add(m);
       return m;
     };
-    const gold = this.mat("#9c7350", 0.55, 0.35),
-      navy = this.mat("#182833", 0.43, 0.42);
-    this.trimMaterial = gold;
-    ring(2.62, 0.15, -0.15, navy);
-    ring(2.48, 0.046, 0.18, gold);
-    ring(2.74, 0.045, -0.12, gold);
-    ring(2.66, 0.024, 0.03, navy);
-    ring(0.49, 0.042, 0.32, gold);
-    const back = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.58, 2.58, 0.26, 128),
-      navy,
+    const alloy = this.mat("#bb8551", 0.75, 0.22);
+    const gunmetal = this.mat("#47332a", 0.62, 0.44);
+    const recess = this.mat("#101721", 0.31, 0.51);
+    this.trimMaterial = alloy;
+    this.plateMaterial = gunmetal;
+
+    // Axial cross-section. The lip surrounds the inset face, and the broader
+    // rear flange and rotating ribs are exposed when the drum tilts.
+    const profile = [
+      [2.34, -0.52], [2.68, -0.52], [2.77, -0.43], [2.77, -0.35],
+      [2.64, -0.29], [2.64, 0.06], [2.77, 0.13], [2.77, 0.24],
+      [2.70, 0.30], [2.48, 0.30], [2.38, 0.19], [2.34, -0.52],
+    ];
+    const shell = new THREE.Mesh(
+      new THREE.LatheGeometry(profile.map(([radius, z]) => new THREE.Vector2(radius, z)), 96),
+      gunmetal,
     );
-    back.rotation.x = Math.PI / 2;
-    back.position.z = -0.14;
-    this.root.add(back);
+    shell.rotation.x = Math.PI / 2;
+    this.root.add(shell);
+    ring(2.715, 0.037, -0.43, alloy);
+    ring(2.706, 0.041, 0.276, alloy);
+    ring(2.49, 0.036, 0.258, alloy);
+    ring(2.56, 0.07, 0.202, recess);
+    ring(0.52, 0.037, 0.35, alloy);
+    const backing = new THREE.Mesh(new THREE.CircleGeometry(2.55, 96), recess);
+    backing.position.z = -0.12;
+    this.root.add(backing);
+    const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.107, 0.103, 0.28), alloy, 36);
+    const fixture = new THREE.Object3D();
+    for (let i = 0; i < ribs.count; i++) {
+      const angle = i / ribs.count * TAU;
+      fixture.position.set(2.64 * Math.cos(angle), 2.64 * Math.sin(angle), -0.14);
+      fixture.rotation.z = angle;
+      fixture.updateMatrix();
+      ribs.setMatrixAt(i, fixture.matrix);
+    }
+    this.rotor.add(ribs);
     this.lamps = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(0.073, 0.125, 0.036),
+      new THREE.BoxGeometry(0.127, 0.088, 0.034),
       new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
+      LAMP_COUNT,
+    );
+    const sockets = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(0.177, 0.14, 0.037),
+      recess,
       LAMP_COUNT,
     );
     const lamp = new THREE.Object3D();
     for (let i = 0; i < LAMP_COUNT; i++) {
       const angle = i / LAMP_COUNT * TAU;
-      lamp.position.set(2.59 * Math.cos(angle), 2.59 * Math.sin(angle), 0.15);
+      lamp.position.set(2.602 * Math.cos(angle), 2.602 * Math.sin(angle), 0.312);
       lamp.rotation.z = angle - Math.PI / 2;
+      lamp.updateMatrix();
+      sockets.setMatrixAt(i, lamp.matrix);
+      lamp.position.z = 0.337;
       lamp.updateMatrix();
       this.lamps.setMatrixAt(i, lamp.matrix);
     }
-    this.root.add(this.lamps);
+    this.root.add(sockets, this.lamps);
     this.lampColor = new THREE.Color();
     this.lampSignal = new THREE.Color();
     this.lampIdle = new THREE.Color();
     this.hub = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.44, 0.47, 0.2, 64),
-      gold,
+      new THREE.CylinderGeometry(0.45, 0.55, 0.27, 48),
+      alloy,
     );
     this.hub.rotation.x = Math.PI / 2;
-    this.hub.position.z = 0.29;
+    this.hub.position.z = 0.35;
     this.root.add(this.hub);
     const face = new THREE.Mesh(
       new THREE.CircleGeometry(0.38, 64),
-      this.mat("#1b2e36", 0.26, 0.54),
+      this.mat("#12202e", 0.42, 0.31),
     );
-    face.position.z = 0.4;
+    face.position.z = 0.49;
     this.root.add(face);
+    ring(0.389, 0.021, 0.473, gunmetal);
     const loader = new THREE.TextureLoader();
     const loadBadge = (name) => {
       const texture = loader.load(`${import.meta.env.BASE_URL}assets/${name}`);
@@ -126,10 +188,10 @@ export class ArcadeWheel {
         toneMapped: false,
       }),
     );
-    this.badge.position.z = 0.415;
+    this.badge.position.z = 0.498;
     this.root.add(this.badge);
     this.pointer = new THREE.Group();
-    this.pointer.position.set(0, 2.88, 0.35);
+    this.pointer.position.set(0, 2.84, 0.37);
     this.root.add(this.pointer);
     this.pointerMaterial = new THREE.MeshStandardMaterial({
       color: WHEEL_FINISH.sun.signal,
@@ -154,6 +216,10 @@ export class ArcadeWheel {
         this.pointerMaterial,
       ),
     );
+    const pivot = new THREE.Mesh(new THREE.CylinderGeometry(0.083, 0.097, 0.14, 8), alloy);
+    pivot.rotation.x = Math.PI / 2;
+    pivot.position.z = 0.14;
+    this.pointer.add(pivot);
     this.segments = new THREE.Group();
     this.rotor.add(this.segments);
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -168,6 +234,7 @@ export class ArcadeWheel {
     this.places = places;
     this.wedges = [];
     this.mode = mode;
+    this.hasResult = false;
     if (places.length && !this.spinning)
       this.angle = targetRotation(this.angle, 0, places.length, 0);
     if (!this.renderer) return;
@@ -175,9 +242,11 @@ export class ArcadeWheel {
     this.trimMaterial.color.set(finish.metal);
     this.trimMaterial.emissive.set(finish.idle);
     this.trimMaterial.emissiveIntensity = 0.08;
+    this.plateMaterial.color.set(finish.plate);
     this.pointerMaterial.color.set(finish.signal);
     this.pointerMaterial.emissive.set(finish.signal);
     this.pointerMaterial.emissiveIntensity = 0.16;
+    this.spinLight.color.set(finish.lamp);
     this.badge.material.map = this.badges[mode];
     this.lampIdle.set(finish.idle);
     this.lampSignal.set(finish.signal);
@@ -191,8 +260,8 @@ export class ArcadeWheel {
     }
     const colors =
       mode === "sun"
-        ? ["#653a29", "#52432c", "#784d31", "#354b4b"]
-        : ["#253b51", "#2e505d", "#343d58", "#43515d"];
+        ? ["#814433", "#69542c", "#935d37", "#315354"]
+        : ["#2b4167", "#276075", "#453e68", "#345465"];
     places.forEach((p, i) => {
       let start = (i / places.length) * Math.PI * 2,
         end = ((i + 1) / places.length) * Math.PI * 2,
@@ -212,7 +281,13 @@ export class ArcadeWheel {
           curveSegments: 40,
           steps: 1,
         }),
-        this.mat(colors[i % 4], 0.2, 0.58),
+        new THREE.MeshPhysicalMaterial({
+          color: colors[i % 4],
+          metalness: 0.27,
+          roughness: 0.49,
+          clearcoat: 0.54,
+          clearcoatRoughness: 0.33,
+        }),
       );
       wedge.position.z = 0.015;
       wedge.userData.baseColor = wedge.material.color.clone();
@@ -250,7 +325,11 @@ export class ArcadeWheel {
     if (!width || !height) return;
     this.renderer.setSize(Math.round(width), Math.round(height), false);
     this.camera.aspect = width / height;
-    this.camera.position.z = 9.1;
+    const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
+    const availableAngle = Math.atan(Math.tan(halfFov) * Math.min(1, this.camera.aspect) * 0.94);
+    // Fit the whole tilted drum, including the pointer, at its closest position.
+    this.camera.position.z = MAX_WHEEL_ADVANCE + WHEEL_RADIUS / Math.sin(availableAngle);
+    this.camera.lookAt(0, 0, 0);
     this.camera.updateProjectionMatrix();
   }
   spin(index, power = 0.4) {
@@ -283,9 +362,10 @@ export class ArcadeWheel {
   paintLamps(phase = 0, intensity = 0, result = false) {
     for (let i = 0; i < LAMP_COUNT; i++) {
       const distance = (i - phase + LAMP_COUNT) % LAMP_COUNT;
-      const sweep = Math.max(0, 1 - distance / 10) * intensity;
+      const sweep = Math.max(0, 1 - distance / 11) * intensity;
+      const echo = Math.max(0, 1 - Math.abs(distance - 24) / 8) * intensity * 0.47;
       const atPointer = Math.abs(i - LAMP_COUNT / 4) <= 1;
-      const level = result && atPointer ? 0.92 : Math.max(sweep, i % 6 === 0 ? 0.26 : 0.07);
+      const level = result && atPointer ? 1 : Math.max(sweep, echo, i % 6 === 0 ? 0.43 : 0.13);
       this.lamps.setColorAt(i, this.lampColor.copy(this.lampIdle).lerp(this.lampSignal, level));
     }
     this.lamps.instanceColor.needsUpdate = true;
@@ -293,6 +373,10 @@ export class ArcadeWheel {
 
   frame(t) {
     if (!this.host.clientWidth || !this.host.clientHeight) return;
+    const drift = this.reduced ? 0 : Math.sin(t * 0.0014);
+    let tiltX = 0.19 + drift * 0.018;
+    let tiltY = -0.23 + drift * 0.035;
+    let lift = 0;
     if (this.spinning) {
       const elapsed = Math.max(0, t - this.start);
       const p = Math.min(1, elapsed / this.duration);
@@ -303,19 +387,24 @@ export class ArcadeWheel {
         ? (p < 1 ? this.from : this.to)
         : this.from + (this.to - this.from) * spinProgress(p);
       if (!this.reduced) {
-        const sweep = -this.angle * 0.58;
+        const sweep = -1.44 + p * TAU * 1.8;
         const power = Math.sin(Math.PI * p) ** 0.7;
+        const kick = Math.sin(Math.PI * Math.min(1, p * 8));
+        const recoil = p < 1 ? 0 : Math.sin(settle * TAU) * (1 - settle) ** 2;
+        tiltX += power * 0.13 + kick * 0.08 - recoil * 0.12;
+        tiltY += Math.sin(p * TAU) * power * 0.28;
+        lift = kick * 0.23 + power * 0.18;
         this.spinLight.position.set(3.6 * Math.cos(sweep), 3.6 * Math.sin(sweep), 4.2);
-        this.spinLight.intensity = 15 + 32 * power;
+        this.spinLight.intensity = 16 + 53 * power;
         if (p < 1) {
-          this.paintLamps(THREE.MathUtils.euclideanModulo(-this.angle / TAU * LAMP_COUNT, LAMP_COUNT), power * 0.8);
+          this.paintLamps(THREE.MathUtils.euclideanModulo(sweep / TAU * LAMP_COUNT, LAMP_COUNT), 0.4 + power * 0.60);
           const sinceHit = t - this.pointerHit;
           this.pointer.rotation.z = -Math.sin(sinceHit * 0.054) *
             Math.exp(-sinceHit / 32) * (0.18 + power * 0.20);
         } else {
-          const spring = Math.sin(settle * TAU) * (1 - settle) ** 2;
-          this.angle = this.to + spring * 0.075;
-          this.pointer.rotation.z = -spring * 0.21;
+          this.angle = this.to + recoil * 0.075;
+          this.pointer.rotation.z = -recoil * 0.37;
+          this.paintLamps(LAMP_COUNT / 4, (1 - settle) * 0.72, true);
         }
       }
       let tick = Math.floor(this.angle / ((Math.PI * 2) / 64));
@@ -334,12 +423,12 @@ export class ArcadeWheel {
       }
       if (p === 1 && settle === 1) {
         this.spinning = false;
+        this.hasResult = true;
         this.angle = this.to;
         this.paintLamps(0, 0, true);
         this.pointer.rotation.z = 0;
         this.spinLight.position.copy(this.spinLightHome);
-        this.spinLight.color.set(0xffb763);
-        this.spinLight.intensity = 15;
+        this.spinLight.intensity = 16;
         const finish = WHEEL_FINISH[this.mode];
         this.wedges.forEach(({ material }, index) => {
           if (index === this.index) {
@@ -352,9 +441,12 @@ export class ArcadeWheel {
         });
         this.onDone(this.index);
       }
+    } else if (!this.reduced && !this.hasResult) {
+      this.paintLamps((t * 0.0065) % LAMP_COUNT, 0.25);
     }
     this.rotor.rotation.z = this.angle;
-    this.root.rotation.y = this.reduced ? 0 : Math.sin(t * 0.0005) * 0.025;
+    this.root.rotation.set(tiltX, tiltY, 0);
+    this.root.position.z = lift;
     this.renderer.render(this.scene, this.camera);
   }
   dispose() {
@@ -373,6 +465,7 @@ export class ArcadeWheel {
         o.material.dispose();
       }
     });
+    this.reflection?.dispose();
     this.renderer?.dispose();
   }
 }

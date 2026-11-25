@@ -3,10 +3,12 @@ import { findDetour } from "./detour.js";
 const osm = "https://www.openstreetmap.org";
 
 async function locate(address, signal) {
+  const postcode = address.match(/\b690\d{2}\b/)?.[0];
+  if (!postcode) throw new Error("Code postal introuvable");
   const params = new URLSearchParams({
     q: address,
     index: "address",
-    postcode: "69007",
+    postcode,
     limit: "1",
   });
   const response = await fetch(
@@ -18,7 +20,7 @@ async function locate(address, signal) {
   const match = features?.[0];
   const [lon, lat] = match?.geometry?.coordinates ?? [];
   if (
-    match?.properties?.postcode !== "69007" ||
+    match?.properties?.postcode !== postcode ||
     !(match.properties.score >= 0.75) ||
     !Number.isFinite(lon) ||
     !Number.isFinite(lat)
@@ -43,6 +45,7 @@ export function mountTicketMap(container) {
     request = undefined;
     frame.replaceChildren();
     status.textContent = "";
+    delete status.dataset.state;
     detourRequest?.abort();
     detourRequest = undefined;
     destination = undefined;
@@ -57,6 +60,7 @@ export function mountTicketMap(container) {
     const controller = new AbortController();
     request = controller;
     status.textContent = "Recherche de l’adresse…";
+    status.dataset.state = "pending";
     const pointRequest = coordinates.has(address)
       ? Promise.resolve(coordinates.get(address))
       : locate(address, controller.signal);
@@ -81,7 +85,10 @@ export function mountTicketMap(container) {
       if (!controller.signal.aborted)
         status.textContent = "Carte indisponible. Essaie le lien OpenStreetMap.";
     } finally {
-      if (request === controller) request = undefined;
+      if (request === controller) {
+        delete status.dataset.state;
+        request = undefined;
+      }
     }
   }
 

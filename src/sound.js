@@ -102,13 +102,15 @@ export class Sound {
     this.tone(pitch, 0.033, 0.055, { end: pitch * 0.7 });
   }
 
-  win() {
-    for (const delay of [0, 0.065, 0.13]) {
-      this.noise(980, 0.055, 0.12, delay);
+  win(offset = 0, feed = 0.59) {
+    for (const step of [0, 0.29, 0.56, 0.83]) {
+      const delay = offset + feed * step;
+      this.noise(1070, 0.052, 0.109, delay);
+      this.tone(184, 0.052, 0.038, { delay, end: 124, wave: "triangle" });
     }
-    this.noise(1600, 0.028, 0.10, 0.19);
+    this.noise(1700, 0.051, 0.095, offset + feed);
     this.palette.chime.forEach((note, index) => {
-      const delay = 0.22 + index * 0.09;
+      const delay = offset + feed + 0.085 + index * 0.09;
       this.tone(note, index === 3 ? 0.42 : 0.25, 0.105, { delay });
       this.tone(note * 2, 0.105, 0.025, { delay, wave: "sine" });
     });

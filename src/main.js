@@ -2,9 +2,11 @@ import "./style.css";
 import "./cabinet.css";
 import "./arcade.css";
 import "./cabinet-hud.css";
+import "./ticket.css";
 import { mountCabinetHud } from "./cabinet-hud.js";
 import {
   places,
+  ALL_DISTRICTS,
   filterPlaces,
   chooseIndex,
   makeWheelPool,
@@ -15,6 +17,8 @@ import { Sound } from "./sound.js";
 import { mountTicketMap } from "./ticket-map.js";
 import { mountAgenda } from "./agenda.js";
 import { mountBaySmoke } from "./bay-smoke.js";
+import { mountActivityDial } from "./activity-dial.js";
+import { mountInstallation } from "./pwa.js";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
@@ -42,19 +46,22 @@ const storage = {
 };
 let mode = null,
   category = "Tout",
-  district = "Tout le 7e",
+  district = ALL_DISTRICTS,
   query = "",
   favoritesOnly = false,
   spinning = false,
   charging = false,
   chargeStart = 0,
   chargeFrame,
+  leverStartY = 0,
+  leverPull = null,
   activePool = [],
   lastResult = null,
   lastDraw = null,
   keptTicket = null,
   previousFocus = null,
   poolDirty = false;
+let dialAngle = 0;
 let favorites = storage
     .get("sl-favorites", [])
     .filter((x) => typeof x === "string"),
@@ -63,6 +70,12 @@ let favorites = storage
     .filter((x) => typeof x === "string")
     .slice(-3),
   count = Number(storage.get("sl-count", 0)) || 0;
+const PRINT_TIMING = {
+  sun: { transfer: 320, feed: 590 },
+  moon: { transfer: 410, feed: 640 },
+};
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
 const sparkTracks = Array.from({ length: 10 }, (_, i) => {
   const angle = i * 137.5;
   const delay = 80 + (i % 7) * 78;
@@ -70,28 +83,12 @@ const sparkTracks = Array.from({ length: 10 }, (_, i) => {
   return `<i style="--angle:${angle}deg;--delay:${delay}ms;--duration:${duration}ms"></i>`;
 }).join("");
 
-function dustLayer(depth, count) {
-  const near = depth === "near";
-  const grains = Array.from({ length: count }, (_, i) => {
-    const left = i % 2 === 0;
-    const x = 3 + ((i * 11 + (near ? 5 : 0)) % (near ? 21 : 34));
-    const y = (near ? 44 : 18) + (i * 17) % (near ? 44 : 68);
-    const direction = left ? 1 : -1;
-    const drift = direction * ((near ? 23 : 9) + (i % 5) * 4);
-    const rise = (near ? 30 : 13) + (i % 4) * 7;
-    const duration = (near ? 8 : 14) + (i % 7) * 1.7;
-    return `<i style="--x:${left ? x : 100 - x}%;--y:${y}%;--drift:${drift}px;--rise:-${rise}px;--flight:${duration}s;--offset:-${i * 3.17}s"></i>`;
-  }).join("");
-  return `<div class="bay-dust-layer bay-dust-${depth}">${grains}</div>`;
-}
-const bayDust = dustLayer("far", 24) + dustLayer("near", 16);
-
 const sound = new Sound();
 sound.enabled = storage.get("sl-sound", false) === true;
 
 $("#app").innerHTML = `
- <div class="room" aria-hidden="true"></div><div class="room-shade" aria-hidden="true"></div><div class="bay-dust" aria-hidden="true"><canvas id="bay-smoke" class="bay-smoke"></canvas>${bayDust}</div>
- <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
+ <div class="room" aria-hidden="true"></div><div class="room-shade" aria-hidden="true"></div><div class="bay-dust" aria-hidden="true"><canvas id="bay-smoke" class="bay-smoke"></canvas></div>
+ <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="install-app" type="button" class="plain-button" aria-label="Installer Quartier Libre" hidden>Installer</button><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
  <main>
   <section id="choose" class="choose" aria-labelledby="welcome-title"><h1 id="welcome-title" class="sr-only">Choisir une borne</h1>
    <button type="button" class="agenda-trigger" data-agenda>Une sortie avec Ville Morte</button>
@@ -101,11 +98,11 @@ $("#app").innerHTML = `
   <section id="play" class="play" hidden aria-label="La borne de sorties"><div class="play-top"><button id="back" class="text-button">← CHANGER DE BORNE</button><span class="play-top-note">GUILLOTIÈRE · JEAN MACÉ · GERLAND</span></div>
    <div class="game-layout"><aside class="left-panel"><p class="eyebrow">COMMENT JOUER</p><h2>Tire le levier.</h2><ol><li>Choisis ton envie.</li><li>Tire le levier vers le bas.</li><li>Relâche pour lancer.</li></ol><p class="side-note">Six lieux au maximum par tour.<br>Les derniers tirages sont écartés.</p><div class="session-stamp"><span>TIRAGES</span><strong id="session-count">${String(count).padStart(2, "0")}</strong></div></aside>
    <article id="cabinet" class="cabinet" aria-labelledby="machine-title"><div class="cabinet-roof"><span class="roof-serial">QL–07 / <span id="serial-mode">S</span></span><span class="roof-lights" aria-hidden="true">▪ ▪ ▪ ▪ ▪</span></div><div class="marquee"><i class="screw" aria-hidden="true"></i><div><span id="machine-kicker">JOURNÉE / LYON 7e</span><h2 id="machine-title">SOLEIL</h2></div><span id="machine-icon" class="marquee-icon" aria-hidden="true">☀</span><i class="screw" aria-hidden="true"></i></div>
-    <div class="screen-bezel"><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="wheel-effects" aria-hidden="true"><div class="wheel-sparks">${sparkTracks}</div></div><div class="scanlines" aria-hidden="true"></div></div></div>
-    <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">ÉLAN</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
-    <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><span></span></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
+    <div class="screen-bezel"><div class="bezel-lamp bezel-lamp-left" aria-hidden="true"></div><div class="bezel-lamp bezel-lamp-right" aria-hidden="true"></div><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="wheel-effects" aria-hidden="true"><div class="wheel-sparks">${sparkTracks}</div></div><div class="scanlines" aria-hidden="true"></div></div></div>
+    <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><span class="deck-trace deck-trace-input" aria-hidden="true"></span><span class="deck-trace deck-trace-output" aria-hidden="true"></span><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">ÉLAN</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
+    <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><i class="printer-led"></i><div class="printer-feed"><div class="printer-paper"><b id="print-place"></b><i></i></div></div></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
    </article>
-   <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
+   <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>${ALL_DISTRICTS}</option><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option><option>Rancy · Lyon 3e</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
    <button type="button" id="cabinet-agenda" data-agenda>Ville Morte</button>
    <p class="keyboard-note">CLAVIER : <kbd>ESPACE</kbd> ABAISSER / RELÂCHER <span>·</span> <kbd>←</kbd> <kbd>→</kbd> CHANGER D’ENVIE</p>
    <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources indiquées sur les fiches. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
@@ -114,18 +111,21 @@ $("#app").innerHTML = `
  <dialog id="result" class="result" aria-labelledby="result-title">
   <button id="close-result" class="dialog-close" aria-label="Fermer le ticket">×</button>
   <div class="ticket-body">
-   <p class="eyebrow" id="result-label">Résultat du tirage</p>
-   <h2 id="result-title"></h2>
-   <p id="result-category"></p>
-   <address id="result-address"></address>
-   <div class="ticket-links">
-    <a id="maps" target="_blank" rel="noopener noreferrer">Y aller</a>
-    <button id="again" type="button">Garder et relancer</button>
-   </div>
+   <header class="ticket-head">
+    <p class="eyebrow" id="result-label">Résultat du tirage</p>
+    <h2 id="result-title" tabindex="-1" autofocus></h2>
+    <p id="result-category"></p>
+    <address id="result-address"></address>
+   </header>
    <div id="ticket-compare" class="ticket-compare" aria-label="Comparer les tickets" hidden>
     <button id="compare-kept" type="button"></button>
     <button id="compare-draw" type="button"></button>
    </div>
+   <section id="ticket-map" class="ticket-map" aria-label="Carte du lieu">
+    <p id="map-status" role="status"></p>
+    <div id="map-frame"></div>
+    <a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a>
+   </section>
    <p id="result-description"></p>
    <div class="ticket-secondary">
     <a id="official" target="_blank" rel="noopener noreferrer">Infos du lieu</a>
@@ -137,25 +137,37 @@ $("#app").innerHTML = `
     <p id="detour-status" role="status"></p>
     <a id="detour-link" target="_blank" rel="noopener noreferrer" hidden></a>
    </section>
-   <section id="ticket-map" class="ticket-map" aria-label="Carte du lieu">
-    <p id="map-status" role="status"></p>
-    <div id="map-frame"></div>
-    <a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a>
-   </section>
+  </div>
+  <div class="ticket-links">
+   <a id="maps" target="_blank" rel="noopener noreferrer">Y aller</a>
+   <button id="again" type="button">Garder et relancer</button>
   </div>
  </dialog>
  <dialog id="agenda" class="info-dialog" aria-labelledby="agenda-title"><button id="close-agenda" class="dialog-close" aria-label="Fermer">×</button><h2 id="agenda-title">Tirage Ville Morte</h2><p id="agenda-status" role="status"></p><article id="agenda-card" hidden><h3 id="agenda-event-name"></h3><p id="agenda-event-date"></p><p id="agenda-event-place"></p><a id="agenda-event-link" target="_blank" rel="noopener noreferrer">Voir l’annonce sur Ville Morte</a></article><button id="agenda-again" class="agenda-trigger" type="button" hidden>Autre événement</button><p><a href="https://agenda.villemorte.fr/" target="_blank" rel="noopener noreferrer">Tout l’agenda Ville Morte</a></p></dialog>
  <dialog id="info" class="info-dialog"><button id="close-info" class="dialog-close" aria-label="Fermer">×</button><h2 id="info-title"></h2><div id="info-content"></div></dialog><div id="announce" class="sr-only" aria-live="polite"></div>`;
 
 $(".welcome-bottom span").textContent = "GUILLOTIÈRE / JEAN MACÉ / GERLAND";
+mountInstallation($("#install-app"));
 const hud = mountCabinetHud();
-const stopBaySmoke = mountBaySmoke($("#bay-smoke"));
+const cabinet = $("#cabinet");
+const printerSlot = $(".ticket-slot");
+const printPaper = $(".printer-paper");
+const lever = $("#launch");
+const leverCaption = $("#lever-caption");
+const leverMeter = $(".power-track");
+const result = $("#result");
+const ticketBody = $(".ticket-body");
+const stopBaySmoke = mountBaySmoke($("#bay-smoke"), cabinet);
 const ticketMap = mountTicketMap($(".ticket-body"));
 const openAgenda = mountAgenda($("#agenda"));
 $$("[data-agenda]").forEach((button) => button.addEventListener("click", openAgenda));
 const wheel = new ArcadeWheel($("#wheel"), {
   onTick: (p, i) => {
     sound.tick(p);
+    if (p > 0.72 && !cabinet.classList.contains("braking")) {
+      cabinet.classList.add("braking");
+      $("#screen-status").textContent = "FREINAGE";
+    }
     const place = activePool[i];
     const hint = $("#screen-hint");
     if (place && hint.textContent !== (place.shortName ?? place.name)) {
@@ -174,8 +186,12 @@ function filtered() {
     favorites: favoritesOnly ? favorites : null,
   });
 }
+function drawablePlaces() {
+  return filtered().filter((place) => place.available !== false);
+}
 function refreshPool({ renew = false, exclude = null } = {}) {
-  const candidates = filtered().filter(({ id }) => id !== exclude);
+  const eligible = drawablePlaces();
+  const candidates = exclude ? eligible.filter(({ id }) => id !== exclude) : eligible;
   activePool = renew
     ? renewWheelPool(candidates, recent, activePool)
     : makeWheelPool(candidates, recent);
@@ -188,8 +204,8 @@ function refreshPool({ renew = false, exclude = null } = {}) {
         `<li data-index="${i}"><span>${String(i + 1).padStart(2, "0")}</span>${escape(p.name)}</li>`,
     )
     .join("");
-  $("#reroll").disabled =
-    filtered().filter((p) => p.available !== false).length < 2;
+  hud.sync({ category, district, eligible: eligible.length });
+  $("#reroll").disabled = eligible.length < 2;
   $("#pool-count").textContent =
     `${activePool.length} ${activePool.length === 1 ? "LIEU" : "LIEUX"}`;
   $("#screen-status").textContent = "PRÊT À SORTIR";
@@ -213,7 +229,6 @@ function animateCabinet(kind) {
   cabinetAnimationTimer = setTimeout(() => cabinet.classList.remove(kind), 550);
 }
 function renderCategories() {
-  hud.sync({ category, district });
   const categories = [
     "Tout",
     ...new Set(
@@ -222,10 +237,10 @@ function renderCategories() {
   ];
   $("#activity-label").textContent = category;
   $("#joystick").setAttribute("aria-label", `Changer d’activité : ${category}`);
-  $("#joystick").style.setProperty(
-    "--dial-angle",
-    `${categories.indexOf(category) * 72}deg`,
-  );
+  const targetAngle = categories.indexOf(category) * (360 / categories.length);
+  const delta = (((targetAngle - dialAngle + 180) % 360) + 360) % 360 - 180;
+  dialAngle += delta;
+  $("#joystick").style.setProperty("--dial-angle", `${dialAngle}deg`);
   $("#categories").innerHTML = categories
     .map(
       (c, i) =>
@@ -255,10 +270,13 @@ function chooseMode(value) {
   if (spinning) return;
   cancelCharge();
   mode = value;
+  const printer = PRINT_TIMING[mode];
+  cabinet.style.setProperty("--print-transfer", `${printer.transfer}ms`);
+  cabinet.style.setProperty("--paper-feed", `${printer.feed}ms`);
   keptTicket = null;
   hud.resetPanels();
   category = "Tout";
-  district = "Tout le 7e";
+  district = ALL_DISTRICTS;
   query = "";
   favoritesOnly = false;
   $("#search").value = "";
@@ -296,7 +314,8 @@ function home(e) {
 }
 function lock(value) {
   spinning = value;
-  $("#cabinet").classList.toggle("spinning", value);
+  cabinet.classList.toggle("spinning", value);
+  if (!value) cabinet.classList.remove("braking");
   $$("#play button, #play select, #play input, #home").forEach((el) => {
     if (el.tagName === "A") {
       el.setAttribute("aria-disabled", String(value));
@@ -304,9 +323,14 @@ function lock(value) {
     }
     el.disabled = value;
   });
-  if (!value)
-    $("#reroll").disabled =
-      filtered().filter((p) => p.available !== false).length < 2;
+  if (!value) {
+    $("#reroll").disabled = drawablePlaces().length < 2;
+    lever.disabled = !activePool.length;
+  }
+}
+function chargePower(now) {
+  const held = Math.max(0, Math.min(1, (now - chargeStart) / 1250));
+  return leverPull ?? (0.25 + held * 0.75);
 }
 function beginCharge() {
   if (spinning || !mode || !activePool.length || charging) return;
@@ -314,38 +338,37 @@ function beginCharge() {
   charging = true;
   chargeStart = performance.now();
   sound.grab();
-  $("#cabinet").classList.add("charging");
-  $("#launch").classList.add("pressed");
-  $("#screen-status").textContent = "TIRE PUIS RELÂCHE";
-  const frame = () => {
+  cabinet.classList.add("charging");
+  lever.classList.add("pressed");
+  $("#screen-status").textContent = "RELÂCHE POUR LANCER";
+  const frame = (now) => {
     if (!charging) return;
-    const pointer = $("#launch").hasAttribute("data-pointer");
-    const p = pointer
-      ? leverPull
-      : Math.min(1, (performance.now() - chargeStart) / 1400);
-    paintCharge(p);
+    paintCharge(chargePower(now));
     chargeFrame = requestAnimationFrame(frame);
   };
-  frame();
+  frame(chargeStart);
 }
 function paintCharge(power) {
-  $("#power").style.width = `${power * 100}%`;
-  $("#cabinet").style.setProperty("--charge", power);
-  $("#launch").style.setProperty("--pull", power);
-  $(".power-track").setAttribute("aria-valuenow", Math.round(power * 100));
+  const percentage = Math.round(power * 100);
+  cabinet.style.setProperty("--charge", power);
+  lever.style.setProperty("--pull", power);
+  leverMeter.setAttribute("aria-valuenow", percentage);
+  const caption = charging ? `${percentage} %` : "ÉLAN";
+  if (leverCaption.textContent !== caption) leverCaption.textContent = caption;
 }
 function cancelCharge() {
+  if (!charging) return;
   charging = false;
   cancelAnimationFrame(chargeFrame);
-  $("#launch").classList.remove("pressed");
-  $("#launch").removeAttribute("data-pointer");
-  $("#cabinet").classList.remove("charging");
+  leverPull = null;
+  lever.classList.remove("pressed");
+  cabinet.classList.remove("charging");
   paintCharge(0);
   if (!spinning) $("#screen-status").textContent = "PRÊT À SORTIR";
 }
 function releaseCharge() {
   if (!charging) return;
-  const power = Math.min(1, (performance.now() - chargeStart) / 1400);
+  const power = chargePower(performance.now());
   cancelCharge();
   launch(power);
 }
@@ -353,9 +376,10 @@ function launch(power = 0.4) {
   if (spinning || !mode) return;
   if (poolDirty) refreshPool();
   if (!activePool.length) return;
+  cabinet.style.setProperty("--launch-signal", 0.56 + power * 0.44);
   sound.launch(power);
   lock(true);
-  $("#lever-caption").textContent = "TIRAGE";
+  leverCaption.textContent = "TIRAGE";
   $("#screen-status").textContent = "TIRAGE EN COURS";
   $("#screen-hint").textContent = "LA ROUE TOURNE.";
   $("#announce").textContent = "La roue tourne.";
@@ -364,9 +388,11 @@ function launch(power = 0.4) {
 function reveal(p) {
   lastDraw = p;
   poolDirty = true;
-  $("#cabinet").classList.add("has-winner", "printing");
-  $("#lever-caption").textContent = "ÉLAN";
-  $("#screen-status").textContent = "ADRESSE TROUVÉE";
+  $("#print-place").textContent = p.shortName ?? p.name;
+  cabinet.classList.add("has-winner", "printing");
+  leverCaption.textContent = "ÉLAN";
+  cabinet.classList.remove("braking");
+  $("#screen-status").textContent = "IMPRESSION DU TICKET";
   $("#screen-hint").textContent = p.shortName ?? p.name;
   highlightPlace(activePool.findIndex((place) => place.id === p.id));
   lastResult = p;
@@ -377,18 +403,29 @@ function reveal(p) {
   $("#session-count").textContent = String(count).padStart(2, "0");
   $("#last-ticket").textContent = p.name;
   $("#show-last").hidden = false;
-  sound.win();
-  $("#announce").textContent = `Prochaine sortie : ${p.name}. ${p.address}`;
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  setTimeout(() => {
-    $("#cabinet").classList.remove("printing");
+  const printer = PRINT_TIMING[mode];
+  if (!reducedMotion.matches) {
+    const slot = printerSlot.getBoundingClientRect();
+    if (slot.top < 0 || slot.bottom + 24 > innerHeight)
+      printerSlot.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  sound.win(
+    reducedMotion.matches ? 0 : printer.transfer / 1000,
+    reducedMotion.matches ? 0.17 : printer.feed / 1000,
+  );
+  const present = () => {
+    const paper = printPaper.getBoundingClientRect();
+    cabinet.classList.remove("printing");
+    $("#screen-status").textContent = "ADRESSE TROUVÉE";
     lock(false);
-    openPlace(p, true);
-  }, reducedMotion ? 0 : 1080);
+    $("#announce").textContent = `Prochaine sortie : ${p.name}. ${p.address}`;
+    openPlace(p, true, paper);
+  };
+  if (reducedMotion.matches) present();
+  else setTimeout(present, printer.transfer + printer.feed + 110);
 }
-function openPlace(p, won = false) {
-  const dialog = $("#result");
-  if (!dialog.open) previousFocus = document.activeElement;
+function openPlace(p, won = false, paper = null) {
+  if (!result.open) previousFocus = paper ? lever : document.activeElement;
   lastResult = p;
   $("#result-label").textContent = won ? "Résultat du tirage" : "Carnet du 7e";
   $("#result-category").textContent = `${p.district} · ${p.category}`;
@@ -408,12 +445,28 @@ function openPlace(p, won = false) {
   $("#favorite-result").textContent = favorites.includes(p.id)
     ? "Retirer des favoris"
     : "Ajouter aux favoris";
-  dialog.scrollTop = 0;
-  if (!dialog.open) dialog.showModal();
+  ticketBody.scrollTop = 0;
+  if (!result.open) {
+    result.showModal();
+    if (!reducedMotion.matches && paper) {
+      const ticket = result.getBoundingClientRect();
+      const x = paper.left + (paper.width - ticket.width) / 2 - ticket.left;
+      const y = paper.top - ticket.top;
+      const scale = paper.width / ticket.width;
+      result.animate([
+        { transform: `translate(${x}px, ${y}px) rotate(-6deg) scale(${scale})` },
+        {
+          transform: `translate(${x * 0.20}px, ${y * 0.23 - 17}px) rotate(1.7deg) scale(.78)`,
+          offset: 0.61,
+        },
+        { transform: "none" },
+      ], { duration: 580, easing: "cubic-bezier(.18,.7,.24,1)" });
+    }
+  }
 }
 
 function hasAlternative(place) {
-  return filtered().some((candidate) => candidate.id !== place.id && candidate.available !== false);
+  return drawablePlaces().some((candidate) => candidate.id !== place.id);
 }
 
 function updateTicketComparison(place) {
@@ -442,13 +495,12 @@ function toggleFavorite(id) {
   if (lastResult) $("#again").disabled = !hasAlternative(lastResult);
 }
 function closeResult() {
-  $("#result").close();
-  previousFocus?.focus({ preventScroll: true });
+  result.close();
 }
 function reset() {
   if (spinning) return;
   category = "Tout";
-  district = "Tout le 7e";
+  district = ALL_DISTRICTS;
   query = "";
   favoritesOnly = false;
   $("#search").value = "";
@@ -461,8 +513,10 @@ function nextCategory(delta = 1) {
   if (spinning || charging || !mode) return;
   const buttons = $$("#categories button");
   const index = buttons.findIndex((b) => b.dataset.category === category);
-  category =
-    buttons[(index + delta + buttons.length) % buttons.length].dataset.category;
+  if (!buttons.length) return;
+  const next = ((index + delta) % buttons.length + buttons.length) % buttons.length;
+  if (next === index) return;
+  category = buttons[next].dataset.category;
   refresh();
   sound.select();
   animateCabinet("changing-activity");
@@ -472,40 +526,33 @@ $$("[data-mode]").forEach((b) =>
 );
 $("#back").onclick = home;
 $("#home").onclick = home;
-let leverStartY = 0,
-  leverPull = 0;
-$("#launch").addEventListener("pointerdown", (e) => {
+lever.addEventListener("pointerdown", (e) => {
   if (
+    !e.isPrimary ||
     (e.button !== 0 && e.pointerType !== "touch") ||
-    spinning ||
+    spinning || charging ||
     !activePool.length
   )
     return;
   leverStartY = e.clientY;
-  leverPull = 0;
-  $("#launch").setAttribute("data-pointer", "");
-  $("#launch").setPointerCapture(e.pointerId);
+  leverPull = null;
+  lever.setPointerCapture(e.pointerId);
   beginCharge();
 });
-$("#launch").addEventListener("pointermove", (e) => {
-  if (!charging || !$("#launch").hasPointerCapture(e.pointerId)) return;
-  leverPull = Math.max(0, Math.min(1, (e.clientY - leverStartY) / 100));
+lever.addEventListener("pointermove", (e) => {
+  if (!charging || !lever.hasPointerCapture(e.pointerId)) return;
+  const distance = e.clientY - leverStartY;
+  if (leverPull === null && distance < 5) return;
+  leverPull = Math.max(0, Math.min(1, distance / 90));
 });
-$("#launch").addEventListener("pointerup", () => {
-  if (!charging) return;
-  const elapsed = (performance.now() - chargeStart) / 1400;
-  const power = Math.min(
-    1,
-    leverPull > 0.05 ? leverPull : Math.max(0.25, elapsed * 0.5),
-  );
-  cancelCharge();
-  launch(power);
+lever.addEventListener("pointerup", (e) => {
+  if (lever.hasPointerCapture(e.pointerId)) releaseCharge();
 });
-$("#launch").addEventListener("pointercancel", cancelCharge);
-$("#launch").addEventListener("lostpointercapture", () => {
+lever.addEventListener("pointercancel", cancelCharge);
+lever.addEventListener("lostpointercapture", () => {
   if (charging) cancelCharge();
 });
-$("#launch").addEventListener("click", (e) => {
+lever.addEventListener("click", (e) => {
   if (e.detail === 0 && !spinning && !charging) launch();
 });
 document.addEventListener("keydown", (e) => {
@@ -517,6 +564,7 @@ document.addEventListener("keydown", (e) => {
   )
     return;
   if (e.code === "Space") {
+    if (e.target.closest("button, a, summary") && e.target.id !== "launch") return;
     e.preventDefault();
     if (!e.repeat) beginCharge();
   }
@@ -543,7 +591,7 @@ $("#categories").onclick = (e) => {
   animateCabinet("changing-activity");
   sound.select();
 };
-$("#joystick").onclick = () => nextCategory();
+mountActivityDial($("#joystick"), nextCategory);
 $("#reset-filter").onclick = reset;
 $("#reroll").onclick = () => {
   if (spinning || charging) return;
@@ -581,7 +629,9 @@ $("#place-list").onclick = (e) => {
 };
 $("#favorite-result").onclick = () => toggleFavorite(lastResult.id);
 $("#close-result").onclick = closeResult;
-$("#result").addEventListener("close", () => {
+result.addEventListener("close", () => {
+  if (result.open) return;
+  result.getAnimations().forEach((animation) => animation.cancel());
   ticketMap.clear();
   previousFocus?.focus({ preventScroll: true });
 });
@@ -594,7 +644,7 @@ $("#again").onclick = () => {
 };
 $("#compare-kept").onclick = () => openPlace(keptTicket, keptTicket === lastDraw);
 $("#compare-draw").onclick = () => openPlace(lastDraw, true);
-$("#show-last").onclick = () => openPlace(lastDraw || lastResult);
+$("#show-last").onclick = () => openPlace(lastDraw || lastResult, true);
 $("#sound").onclick = () => {
   sound.setEnabled(!sound.enabled);
   storage.set("sl-sound", sound.enabled);
@@ -614,12 +664,12 @@ function info(title, html) {
 $("#help").onclick = () =>
   info(
     "UTILISER LA BORNE",
-    "<p>Choisis Soleil pour la journée, Lune pour la soirée. Règle ton envie et ton quartier, puis tire le levier vers le bas et relâche pour faire tourner la roue. Un clic simple fonctionne aussi.</p><p>Au clavier : maintiens Espace, puis relâche. Les flèches changent l’envie. Le sélecteur rotatif fait défiler les activités. AUTRES LIEUX renouvelle la sélection en gardant les filtres.</p><p>Six adresses au maximum sont affichées par tour. Elles sont choisies dans toute la sélection filtrée. Les trois derniers lieux sont écartés si d’autres restent disponibles. Chaque lieu affiché sur la roue a la même chance. L’élan change la rotation, pas les probabilités.</p><p>Les favoris et le compteur restent dans ce navigateur. Aucun compte ni paiement.</p>",
+    "<p>Choisis Soleil pour la journée, Lune pour la soirée. Règle ton envie et ton quartier, puis tire le levier vers le bas et relâche pour faire tourner la roue. Un clic simple fonctionne aussi.</p><p>Au clavier : maintiens Espace, puis relâche. Les flèches changent l’envie. Clique sur le sélecteur ou fais-le glisser à gauche ou à droite pour changer d’activité. AUTRES LIEUX renouvelle la sélection en gardant les filtres.</p><p>Six adresses au maximum sont affichées par tour. Elles sont choisies dans toute la sélection filtrée. Les trois derniers lieux sont écartés si d’autres restent disponibles. Chaque lieu affiché sur la roue a la même chance. L’élan change la rotation, pas les probabilités.</p><p>Les favoris et le compteur restent dans ce navigateur. Aucun compte ni paiement.</p>",
   );
 $("#sources").onclick = () =>
   info(
     "À PROPOS & SOURCES",
-    `<p>Quartier Libre propose des sorties à Lyon 7e, avec une borne pour la journée et une borne pour la soirée.</p><p>Cette première sélection couvre Lyon 7e. Elle n’est pas exhaustive. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources du catalogue :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a> · ${p.checked}${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
+    `<p>Quartier Libre propose des sorties à Lyon 7e, avec une borne pour la journée et une borne pour la soirée.</p><p>La sélection couvre le 7e et inclut la Maison pour tous des Rancy, dans le 3e. Les catégories jour / nuit sont éditoriales, les ouvertures ne sont pas vérifiées en temps réel.</p><p>Sources du catalogue :</p><ul>${places.map((p) => `<li><a href="${p.source}" target="_blank" rel="noopener noreferrer">${escape(p.name)}</a> · ${p.checked}${p.statusSource ? ` · <a href="${p.statusSource}" target="_blank" rel="noopener noreferrer">Statut à revérifier</a>` : ""}</li>`).join("")}</ul><p>Décor original généré avec imagegen. Borne, commandes et roue réalisées dans le code. Sons synthétisés localement.</p>`,
   );
 $("#close-info").onclick = () => $("#info").close();
 for (const d of $$("dialog"))

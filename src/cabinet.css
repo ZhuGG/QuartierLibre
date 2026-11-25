@@ -420,9 +420,6 @@ body[data-mode="moon"] .lever-ball:after {
     height: 38px;
     margin-top: 1px;
   }
-  .ticket-slot span {
-    left: 12px;
-  }
   .ticket-slot:after {
     left: 10px;
   }

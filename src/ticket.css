@@ -1,0 +1,374 @@
+/* The paper keeps the same edge and ink from the outlet to the open ticket. */
+.cabinet-hud .cabinet-front {
+  grid-template-columns: auto clamp(45px, 11vw, 64px) minmax(0, 1fr);
+}
+
+.cabinet-hud .cabinet-front .ticket-slot {
+  --print-paper: #fff1d1;
+  --print-ink: #533021;
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(156deg, var(--steel-edge), var(--steel-shadow) 48%, #0a0e18);
+  box-shadow: inset 0 1px #fffbda7a, 0 3px 5px #020711bd;
+}
+
+.cabinet-hud[data-mode="moon"] .ticket-slot {
+  --print-paper: #ebf5f6;
+  --print-ink: #204457;
+}
+
+.cabinet-hud .ticket-slot::before {
+  inset: 8px 3px auto;
+  height: 8px;
+  border-color: var(--steel-edge);
+  box-shadow: inset 0 3px #02060c, 0 2px 2px #09101b;
+}
+
+.cabinet-hud .ticket-slot::after {
+  letter-spacing: .19em;
+}
+
+.printer-feed {
+  position: absolute;
+  z-index: 2;
+  inset: 12px 6px auto;
+  height: 53px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.printing .printer-feed {
+  visibility: visible;
+}
+
+.printer-paper {
+  position: relative;
+  height: 46px;
+  padding: 8px 3px 4px;
+  color: var(--print-ink);
+  background:
+    linear-gradient(#20130679, transparent 16%, transparent 74%, #f8fbfd6b),
+    repeating-linear-gradient(0deg, #21243108 0 1px, transparent 1px 3px),
+    var(--print-paper);
+  clip-path: polygon(0 0, 100% 0, 100% 97%, 93% 100%, 86% 96%, 79% 100%, 71% 96%,
+    64% 100%, 57% 96%, 50% 100%, 43% 96%, 36% 100%, 29% 96%, 21% 100%, 14% 96%, 7% 100%, 0 96%);
+  transform: translateY(-105%);
+  transform-origin: top center;
+}
+
+.printer-paper::before {
+  content: "";
+  position: absolute;
+  inset: 5px 3px auto;
+  height: 1px;
+  border-top: 1px dashed currentColor;
+  opacity: .55;
+}
+
+.printer-paper b {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font: 700 5px/1.15 "Courier New", monospace;
+  text-transform: uppercase;
+}
+
+.printer-paper i {
+  display: block;
+  margin-top: 4px;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 2px, currentColor 2px 4px, transparent 4px 6px);
+  opacity: .65;
+}
+
+.printing .printer-paper {
+  animation: paper-feed var(--paper-feed) var(--print-transfer) linear both;
+}
+
+@keyframes paper-feed {
+  0% { transform: translateY(-105%); }
+  18%, 28% { transform: translateY(-73%); }
+  45%, 53% { transform: translateY(-48%); }
+  72%, 81% { transform: translateY(-23%); }
+  95% { transform: translateY(1px) rotate(-1.4deg); }
+  100% { transform: translateY(0); }
+}
+
+.result {
+  --ticket-ink: #37291e;
+  --ticket-accent: #713717;
+  --ticket-paper: #fff1d7;
+  --ticket-fold: #f3dfbc;
+  --ticket-rule: #a87d56;
+  width: min(466px, calc(100% - 24px));
+  max-height: min(88dvh, 760px);
+  overflow: hidden;
+  border-block: 6px solid transparent;
+  background:
+    linear-gradient(135deg, transparent 50%, var(--ticket-paper) 50%) 0 0 / 8px 6px repeat-x border-box,
+    linear-gradient(225deg, transparent 50%, var(--ticket-paper) 50%) 4px 0 / 8px 6px repeat-x border-box,
+    linear-gradient(45deg, transparent 50%, var(--ticket-fold) 50%) 0 100% / 8px 6px repeat-x border-box,
+    linear-gradient(315deg, transparent 50%, var(--ticket-fold) 50%) 4px 100% / 8px 6px repeat-x border-box;
+  background-color: transparent;
+  color: var(--ticket-ink);
+  transform-origin: top center;
+  box-shadow: 0 25px 70px #02071270;
+}
+
+body[data-mode="moon"] .result {
+  --ticket-ink: #1a3240;
+  --ticket-accent: #245068;
+  --ticket-paper: #ebf5f6;
+  --ticket-fold: #d8e8e9;
+  --ticket-rule: #72949f;
+}
+
+.result[open] {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.result[open]::backdrop {
+  background: #08111bd2;
+  backdrop-filter: blur(3px);
+  animation: ticket-backdrop 420ms ease-out both;
+}
+
+@keyframes ticket-backdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ticket-body {
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px clamp(14px, 4.8vw, 27px) 14px;
+  background:
+    repeating-linear-gradient(0deg, #352c2107 0 1px, transparent 1px 4px),
+    linear-gradient(111deg, var(--ticket-fold), transparent 22% 85%, var(--ticket-fold)),
+    var(--ticket-paper);
+  font: 400 .94rem/1.45 system-ui, sans-serif;
+  scrollbar-color: var(--ticket-rule) var(--ticket-paper);
+}
+
+.ticket-head {
+  border-block: 1px dashed var(--ticket-rule);
+  padding: 12px 0 13px;
+}
+
+.ticket-body #result-label {
+  margin: 0 42px 7px 0;
+  color: var(--ticket-accent);
+  font: 750 .75rem/1.3 "Courier New", monospace;
+  text-transform: uppercase;
+  letter-spacing: .095em;
+}
+
+.ticket-body h2 {
+  margin: 0 24px 7px 0;
+  font: 830 clamp(1.42rem, 5.7vw, 2.15rem)/1.08 system-ui, sans-serif;
+  letter-spacing: -.036em;
+  overflow-wrap: anywhere;
+}
+
+#result-category,
+#result-address {
+  margin: 0;
+  font-size: .88rem;
+}
+
+#result-category {
+  color: var(--ticket-accent);
+  font-weight: 720;
+}
+
+#result-address {
+  font-style: normal;
+}
+
+.ticket-links,
+.ticket-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 8px;
+}
+
+.ticket-links {
+  z-index: 1;
+  border-top: 1px dashed var(--ticket-rule);
+  padding: 10px clamp(14px, 4.8vw, 27px) 11px;
+  background: linear-gradient(180deg, var(--ticket-paper), var(--ticket-fold));
+  box-shadow: 0 -5px 15px #15252c14;
+}
+
+.ticket-compare {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.ticket-links > *,
+.ticket-compare button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 7px;
+  border: 1px solid var(--ticket-accent);
+  border-radius: 5px;
+  color: var(--ticket-accent);
+  background: var(--ticket-paper);
+  text-decoration: none;
+  text-align: center;
+  font: 700 .86rem/1.22 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.ticket-links #maps,
+.ticket-compare [aria-pressed="true"] {
+  color: var(--ticket-paper);
+  background: var(--ticket-accent);
+}
+
+.ticket-links > :not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.result :is(a, button):focus-visible {
+  outline: 2px solid var(--ticket-accent);
+  outline-offset: 2px;
+}
+
+.ticket-body #result-description {
+  margin: 11px 0 8px;
+}
+
+.ticket-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 15px;
+}
+
+.ticket-secondary a,
+.ticket-secondary button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 4px 0;
+  color: inherit;
+  text-decoration: underline;
+  font: 650 .86rem/1.35 system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.result-note {
+  margin: 7px 0 0;
+  font-size: .79rem;
+}
+
+.result .detour {
+  margin-top: 10px;
+  padding-bottom: 4px;
+}
+
+.result .dialog-close {
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  top: 5px;
+  right: 6px;
+  border-radius: 4px;
+  color: var(--ticket-ink);
+  background: var(--ticket-paper);
+}
+
+.result .ticket-map {
+  --map-height: clamp(132px, 29dvh, 194px);
+  margin: 11px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.result .ticket-map #map-frame iframe {
+  display: block;
+  height: var(--map-height);
+  margin: 0;
+  border: 1px solid var(--ticket-rule);
+  border-radius: 4px;
+}
+
+.result #map-status:not(:empty) {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--ticket-rule);
+  border-radius: 4px;
+}
+
+.result #map-status[data-state="pending"] {
+  display: grid;
+  min-height: var(--map-height);
+  place-items: center;
+}
+
+.filter-readout #hud-eligible {
+  color: var(--cabinet-glow);
+  font-weight: 650;
+}
+
+.cabinet-hud .power-track {
+  position: relative;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, #080f1a 0 8px, #50616a 8px 9px, #101b29 9px 11px);
+}
+
+.cabinet-hud #power {
+  width: calc(var(--charge, 0) * 100%);
+  background: repeating-linear-gradient(90deg, var(--machine-signal) 0 8px, var(--machine-lamp) 8px 9px, transparent 9px 11px);
+}
+
+.cabinet-hud .charging .power-track::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: clamp(0px, calc(var(--charge) * 100% - 1px), calc(100% - 2px));
+  width: 2px;
+  background: var(--machine-signal);
+  box-shadow: 0 0 5px var(--machine-lamp);
+}
+
+.cabinet-hud .charging .lever-caption {
+  color: var(--machine-signal);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 7px rgba(var(--glow-rgb), .6);
+}
+
+@media (max-width: 600px) {
+  .result {
+    margin: auto auto 0;
+    width: calc(100% - 12px);
+    max-height: 92dvh;
+  }
+
+  .ticket-body {
+    padding-top: 13px;
+  }
+
+  .ticket-links {
+    padding-bottom: max(11px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .ticket-links > * {
+    min-height: 48px;
+  }
+
+  .cabinet-hud .button-caption {
+    display: block;
+    margin: 0;
+    text-align: center;
+    font-size: 10px;
+  }
+}
