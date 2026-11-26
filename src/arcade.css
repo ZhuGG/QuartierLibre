@@ -33,6 +33,46 @@
 .moon-choice .choice-art {
   background-position: right center;
 }
+
+.choice-art {
+  position: relative;
+  overflow: hidden;
+}
+.choice-art::after {
+  content: "";
+  position: absolute;
+  right: 11%;
+  top: 50%;
+  width: clamp(44px, 7vw, 68px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  background: #27343a url("/assets/hub-sun.png") center / 74% no-repeat;
+  border: 3px solid #e0b67e;
+  outline: 2px solid #202b32;
+  box-shadow: inset 2px 2px #fae0aa6e, inset -3px -3px #080f15, 3px 4px #101a24;
+  image-rendering: pixelated;
+}
+.moon-choice .choice-art::after {
+  left: 11%;
+  right: auto;
+  border-color: #99baca;
+  background-color: #1b2d40;
+  background-image: url("/assets/hub-moon.png");
+}
+@media (prefers-reduced-motion: no-preference) {
+  .choice-art::after { transition: transform 180ms ease-out, box-shadow 180ms ease-out; }
+  .choice:focus-visible .choice-art::after { transform: translateY(calc(-50% - 3px)); }
+  @media (hover: hover) {
+    .choice:hover .choice-art::after { transform: translateY(calc(-50% - 3px)); }
+  }
+  .choice:active .choice-art::after { transform: translate(2px, calc(-50% + 2px)); }
+  .arriving .wheel { animation: tube-open 360ms cubic-bezier(.18,.74,.22,1) both; }
+  @keyframes tube-open {
+    0% { clip-path: inset(49% 24%); }
+    30% { clip-path: inset(45% 4%); }
+    100% { clip-path: inset(0); }
+  }
+}
 .neighborhood-strip {
   height: 38px;
   background-size: 100% auto;

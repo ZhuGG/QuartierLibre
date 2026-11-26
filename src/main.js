@@ -92,9 +92,9 @@ $("#app").innerHTML = `
  <header class="site-header"><a href="#" id="home" aria-label="Revenir au choix de la borne"><span class="brand-symbol">7<span>e</span></span><span>QUARTIER<br><b>LIBRE</b></span></a><span class="header-caption">SORTIES À LYON 7e · JOUR / NUIT</span><div class="header-actions"><span class="local-label"><i></i> LYON 7e</span><button id="install-app" type="button" class="plain-button" aria-label="Installer Quartier Libre" hidden>Installer</button><button id="sound" class="plain-button" aria-pressed="${sound.enabled}" aria-label="${sound.enabled ? "Couper" : "Activer"} le son">SON ${sound.enabled ? "ON" : "OFF"}</button><button id="help" class="plain-button" aria-label="Comment jouer">?</button></div></header>
  <main>
   <section id="choose" class="choose" aria-labelledby="welcome-title"><h1 id="welcome-title" class="sr-only">Choisir une borne</h1>
-   <button type="button" class="agenda-trigger" data-agenda>Une sortie avec Ville Morte</button>
    <div class="choices"><button class="choice sun-choice" data-mode="sun" aria-label="Choisir la borne Soleil"><span class="choice-top">SERVICE DE JOUR <span>01 / S</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-sun" aria-hidden="true"></span><strong>SOLEIL</strong><span class="choice-copy">Cafés, restaurants, parcs et culture.</span></button><span class="choice-divider" aria-hidden="true">OU</span><button class="choice moon-choice" data-mode="moon" aria-label="Choisir la borne Lune"><span class="choice-top">SERVICE DE NUIT <span>02 / L</span></span><span class="choice-art" aria-hidden="true"></span><span class="pixel-moon" aria-hidden="true"></span><strong>LUNE</strong><span class="choice-copy">Bars, concerts, restaurants et club.</span></button></div>
    <p class="welcome-bottom"><span>GUILLOTIÈRE / JEAN MACÉ / GERLAND</span><span>${places.length} ADRESSES</span></p>
+   <button type="button" class="agenda-trigger" data-agenda>Agenda Ville Morte</button>
   </section>
   <section id="play" class="play" hidden aria-label="La borne de sorties"><div class="play-top"><button id="back" class="text-button">← CHANGER DE BORNE</button><span class="play-top-note">GUILLOTIÈRE · JEAN MACÉ · GERLAND</span></div>
    <div class="game-layout"><aside class="left-panel"><p class="eyebrow">COMMENT JOUER</p><h2>Tire le levier.</h2><ol><li>Choisis ton envie.</li><li>Tire le levier vers le bas.</li><li>Relâche pour lancer.</li></ol><p class="side-note">Six lieux au maximum par tour.<br>Les derniers tirages sont écartés.</p><div class="session-stamp"><span>TIRAGES</span><strong id="session-count">${String(count).padStart(2, "0")}</strong></div></aside>
@@ -212,7 +212,7 @@ function refreshPool({ renew = false, exclude = null } = {}) {
   $("#wheel-legend").innerHTML = activePool
     .map(
       (p, i) =>
-        `<li data-index="${i}"><span>${String(i + 1).padStart(2, "0")}</span>${escape(p.name)}</li>`,
+        `<li data-index="${i}"><span aria-hidden="true">${String(i + 1).padStart(2, "0")}</span><button type="button" data-wheel-place="${escape(p.id)}">${escape(p.name)}</button></li>`,
     )
     .join("");
   hud.sync({ category, district, eligible: eligible.length });
@@ -617,6 +617,11 @@ $("#categories").onclick = (e) => {
 };
 mountActivityDial($("#joystick"), nextCategory);
 $("#reset-filter").onclick = reset;
+$("#wheel-legend").onclick = (event) => {
+  const button = event.target.closest("button[data-wheel-place]");
+  const place = button && activePool.find(({ id }) => id === button.dataset.wheelPlace);
+  if (place && !spinning) openPlace(place);
+};
 $("#reroll").onclick = () => {
   if (spinning || charging) return;
   const previous = activePool.map((p) => p.id);

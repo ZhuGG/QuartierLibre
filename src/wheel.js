@@ -4,6 +4,7 @@ import { targetRotation, spinProgress } from "./data.js";
 
 const LAMP_COUNT = 48;
 const TAU = Math.PI * 2;
+const PEG_COUNT = 36;
 const FINISH_MS = 230;
 const WHEEL_RADIUS = 3.04;
 const MAX_WHEEL_ADVANCE = 0.41;
@@ -122,7 +123,8 @@ export class ArcadeWheel {
     const backing = new THREE.Mesh(new THREE.CircleGeometry(2.55, 96), recess);
     backing.position.z = -0.12;
     this.root.add(backing);
-    const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.107, 0.103, 0.28), alloy, 36);
+    const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.107, 0.103, 0.28), alloy, PEG_COUNT);
+    const pegs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.036, 0.045, 0.115, 8), alloy, PEG_COUNT);
     const fixture = new THREE.Object3D();
     for (let i = 0; i < ribs.count; i++) {
       const angle = i / ribs.count * TAU;
@@ -130,8 +132,13 @@ export class ArcadeWheel {
       fixture.rotation.z = angle;
       fixture.updateMatrix();
       ribs.setMatrixAt(i, fixture.matrix);
+      fixture.position.set(2.48 * Math.cos(angle), 2.48 * Math.sin(angle), 0.32);
+      fixture.rotation.set(Math.PI / 2, 0, 0);
+      fixture.updateMatrix();
+      pegs.setMatrixAt(i, fixture.matrix);
+      fixture.rotation.x = 0;
     }
-    this.rotor.add(ribs);
+    this.rotor.add(ribs, pegs);
     this.lamps = new THREE.InstancedMesh(
       new THREE.BoxGeometry(0.127, 0.088, 0.034),
       new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
@@ -351,7 +358,7 @@ export class ArcadeWheel {
     this.duration = this.reduced ? 150 : 3300 + power * 1600;
     this.finishDuration = this.reduced ? 0 : FINISH_MS;
     if (this.spinLight) this.spinLight.color.set(WHEEL_FINISH[this.mode].lamp);
-    this.lastTick = -1;
+    this.lastTick = Math.floor(this.from * PEG_COUNT / TAU);
     this.pointerHit = this.start - 200;
     if (!this.renderer)
       this.timer = setTimeout(() => {
@@ -398,16 +405,21 @@ export class ArcadeWheel {
         this.spinLight.intensity = 16 + 53 * power;
         if (p < 1) {
           this.paintLamps(THREE.MathUtils.euclideanModulo(sweep / TAU * LAMP_COUNT, LAMP_COUNT), 0.4 + power * 0.60);
+          // The last part of each peg's approach loads the pawl. As the peg
+          // clears the tip, the pawl springs back around its own pivot.
+          const pegPosition = this.angle * PEG_COUNT / TAU;
+          if (Math.floor(pegPosition) !== this.lastTick) this.pointerHit = t;
+          const approach = THREE.MathUtils.smoothstep(pegPosition % 1, 0.66, 1);
           const sinceHit = t - this.pointerHit;
-          this.pointer.rotation.z = -Math.sin(sinceHit * 0.054) *
-            Math.exp(-sinceHit / 32) * (0.18 + power * 0.20);
+          const release = Math.cos(sinceHit * 0.068) * Math.exp(-sinceHit / 38);
+          this.pointer.rotation.z = -0.35 * (approach + (1 - approach) * release);
         } else {
           this.angle = this.to + recoil * 0.075;
           this.pointer.rotation.z = -recoil * 0.37;
           this.paintLamps(LAMP_COUNT / 4, (1 - settle) * 0.72, true);
         }
       }
-      let tick = Math.floor(this.angle / ((Math.PI * 2) / 64));
+      const tick = Math.floor(this.angle * PEG_COUNT / TAU);
       if (!this.reduced && p < 1 && tick !== this.lastTick) {
         this.lastTick = tick;
         this.onTick(
@@ -419,7 +431,6 @@ export class ArcadeWheel {
               this.places.length,
           ),
         );
-        if (t - this.pointerHit >= 52) this.pointerHit = t;
       }
       if (p === 1 && settle === 1) {
         this.spinning = false;
