@@ -2,6 +2,45 @@ const tradeGuide = "https://lyon7rivegauche.com/wp-content/uploads/2025/12/L7RG_
 
 export const newPlaces = [
   {
+    id: "cafe-du-nain",
+    name: "Café du Nain",
+    district: "Guillotière",
+    category: "À table",
+    modes: ["sun"],
+    address: "5 rue Montesquieu, 69007 Lyon",
+    description: "Bouchon lyonnais de la rue Montesquieu, pour le déjeuner.",
+    source: "https://www.lyonrestaurant.fr/lieux/2022/cafe-du-nain",
+    checked: "2026-11-26",
+    color: "#caa079",
+  },
+  {
+    id: "atelier-de-marion",
+    name: "L’Atelier de Marion",
+    aliases: ["Chez Marion"],
+    district: "Guillotière",
+    category: "À table",
+    modes: ["sun", "moon"],
+    address: "3 rue de Bonald, 69007 Lyon",
+    description: "Burgers et frites maison à l’angle des rues de Bonald et Cavenne.",
+    source: "https://hamburgerlyon.com/",
+    checked: "2026-11-26",
+    color: "#d6a57e",
+  },
+  {
+    id: "galerie-boskop",
+    name: "La Galerie de BosKop",
+    shortName: "BosKop",
+    aliases: ["BosKop"],
+    district: "Guillotière",
+    category: "Culture",
+    modes: ["sun", "moon"],
+    address: "60 rue Sébastien Gryphe, 69007 Lyon",
+    description: "Galerie du quartier Mazagran. Expositions, projections et concerts selon la programmation.",
+    source: "https://boskop.org/",
+    checked: "2026-11-26",
+    color: "#9bb8d1",
+  },
+  {
     id: "rancy",
     name: "Maison pour tous des Rancy",
     shortName: "Les Rancy",
@@ -431,4 +470,4 @@ export const newPlaces = [
     source: tradeGuide,
     color: "#d9af8a",
   },
-].map((place) => ({ ...place, checked: "2026-11-25" }));
+].map((place) => ({ checked: "2026-11-25", ...place }));

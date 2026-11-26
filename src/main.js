@@ -16,6 +16,7 @@ import { ArcadeWheel } from "./wheel.js";
 import { Sound } from "./sound.js";
 import { mountTicketMap } from "./ticket-map.js";
 import { mountAgenda } from "./agenda.js";
+import { mountTicketAgenda } from "./ticket-agenda.js";
 import { mountBaySmoke } from "./bay-smoke.js";
 import { mountActivityDial } from "./activity-dial.js";
 import { mountInstallation } from "./pwa.js";
@@ -121,6 +122,7 @@ $("#app").innerHTML = `
     <button id="compare-kept" type="button"></button>
     <button id="compare-draw" type="button"></button>
    </div>
+   <section id="ticket-agenda" aria-label="Programmation du lieu" hidden></section>
    <section id="ticket-map" class="ticket-map" aria-label="Carte du lieu">
     <p id="map-status" role="status"></p>
     <div id="map-frame"></div>
@@ -159,6 +161,7 @@ const result = $("#result");
 const ticketBody = $(".ticket-body");
 const stopBaySmoke = mountBaySmoke($("#bay-smoke"), cabinet);
 const ticketMap = mountTicketMap($(".ticket-body"));
+const ticketAgenda = mountTicketAgenda($("#ticket-agenda"));
 const openAgenda = mountAgenda($("#agenda"));
 $$("[data-agenda]").forEach((button) => button.addEventListener("click", openAgenda));
 const wheel = new ArcadeWheel($("#wheel"), {
@@ -435,6 +438,7 @@ function openPlace(p, won = false, paper = null) {
   $("#result-description").textContent = p.description;
   $("#result-address").textContent = p.address;
   ticketMap.setPlace(p);
+  ticketAgenda.setPlace(p);
   $("#maps").href =
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address)}`;
   $("#official").href = p.source;
@@ -633,6 +637,7 @@ result.addEventListener("close", () => {
   if (result.open) return;
   result.getAnimations().forEach((animation) => animation.cancel());
   ticketMap.clear();
+  ticketAgenda.clear();
   previousFocus?.focus({ preventScroll: true });
 });
 $("#again").onclick = () => {

@@ -286,6 +286,35 @@ body[data-mode="moon"] .result {
   background: var(--ticket-paper);
 }
 
+.result #ticket-agenda {
+  margin-top: 12px;
+  padding-block: 10px;
+  border-block: 1px dashed var(--ticket-rule);
+}
+
+.ticket-event {
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+  font: 500 .94rem/1.4 system-ui, sans-serif;
+}
+
+.ticket-event strong {
+  font-size: 1.02rem;
+}
+
+.ticket-event a,
+#ticket-agenda summary {
+  padding-block: 6px;
+  width: fit-content;
+  cursor: pointer;
+  font: 650 .86rem/1.4 system-ui, sans-serif;
+}
+
+#ticket-agenda details .ticket-event {
+  margin-top: 8px;
+}
+
 .result .ticket-map {
   --map-height: clamp(132px, 29dvh, 194px);
   margin: 11px 0 0;

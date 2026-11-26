@@ -35,13 +35,13 @@ Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dern
 
 La carte OpenStreetMap se charge à l’ouverture du ticket. L’adresse du lieu est convertie en coordonnées par la Géoplateforme de l’IGN. En cas d’échec, le lien de recherche OpenStreetMap reste disponible.
 
-« Un détour » propose un lieu décrit par Wikipédia à moins de 650 mètres du lieu tiré. La distance est à vol d’oiseau. Le tirage Ville Morte consulte son agenda public et propose une sortie dans le 7e ce soir ou parmi les sept prochains jours. Chaque suggestion renvoie à l’annonce originale.
+« Un détour » propose un lieu décrit par Wikipédia à moins de 650 mètres du lieu tiré. La distance est à vol d’oiseau. Le tirage Ville Morte consulte son agenda public et propose une sortie dans le 7e ce soir ou parmi les sept prochains jours. Chaque suggestion renvoie à l’annonce originale. Le ticket affiche également la prochaine annonce Ville Morte du lieu dans les sept jours, puis les autres dates à déplier.
 
 ## Données et extension
 
 Les données sont isolées dans `src/data.js` et `src/places-extra.js` : identifiant, nom, quartier, catégorie, modes, adresse, description, URL source, date de consultation et disponibilité. Pour élargir ensuite le périmètre, ajouter les données et les filtres de quartier ; le moteur de jeu reste indépendant.
 
-66 lieux sont intégrés, dont la MPT des Rancy dans le 3e. Le filtre « Tout le 7e » retire cette exception de proximité. Le Bouillon Paradis figure au carnet, hors tirage tant que son ouverture reste à vérifier. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit est inclus dans les tirages Soleil et Lune.
+69 lieux sont intégrés, dont la MPT des Rancy dans le 3e. Le filtre « Tout le 7e » retire cette exception de proximité. Le Bouillon Paradis figure au carnet, hors tirage tant que son ouverture reste à vérifier. La Faute aux Ours a été retirée après signalement de sa fermeture par l’utilisateur. Les modes jour/nuit sont éditoriaux, pas des horaires en direct. La sélection n’est pas exhaustive. Les événements, conditions d’entrée et horaires doivent être vérifiés sur les sources liées depuis chaque fiche. Le Court-Circuit est inclus dans les tirages Soleil et Lune.
 
 Les dates de consultation et les liens sont indiqués dans « À propos & sources » et dans les données. Ne pas confondre une date de consultation avec une garantie d’ouverture actuelle.
 

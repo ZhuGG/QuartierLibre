@@ -1,4 +1,4 @@
-import { chooseIndex } from "./data.js";
+import { chooseIndex, normalize, places } from "./data.js";
 
 const source = "https://agenda.villemorte.fr";
 const zone = { timeZone: "Europe/Paris" };
@@ -8,15 +8,35 @@ const hour = new Intl.DateTimeFormat("fr-FR", {
   hour: "numeric",
   hourCycle: "h23",
 });
-const displayDate = new Intl.DateTimeFormat("fr-FR", {
+export const displayDate = new Intl.DateTimeFormat("fr-FR", {
   ...zone,
   dateStyle: "full",
   timeStyle: "short",
 });
 
-export function agendaPool(events, now = Date.now()) {
+export const eventUrl = (event) => `${source}/event/${encodeURIComponent(event.slug)}`;
+
+let cache;
+let pending;
+
+async function fetchAgenda() {
+  const response = await fetch(`${source}/api/events`, { signal: AbortSignal.timeout(6000) });
+  if (!response.ok) throw new Error("Agenda indisponible");
+  const events = await response.json();
+  if (!Array.isArray(events)) throw new Error("Format d’agenda inattendu");
+  cache = { events, expires: Date.now() + 5 * 60 * 1000 };
+  return events;
+}
+
+export function loadAgenda() {
+  if (cache && cache.expires > Date.now()) return Promise.resolve(cache.events);
+  pending ??= fetchAgenda().finally(() => { pending = undefined; });
+  return pending;
+}
+
+function upcomingEvents(events, now) {
   const end = now + 7 * 24 * 60 * 60 * 1000;
-  const upcoming = events.filter((event) => {
+  return events.filter((event) => {
     const start = event?.start_datetime * 1000;
     return (
       start >= now &&
@@ -26,12 +46,45 @@ export function agendaPool(events, now = Date.now()) {
       typeof event.slug === "string" &&
       /^[\p{L}\d_-]+$/u.test(event.slug) &&
       typeof event.place?.name === "string" &&
-      /\b69007\b/u.test(event.place?.address)
+      typeof event.place.address === "string"
     );
   });
+}
+
+function venueKey(name, address) {
+  const clean = (value) => normalize(value).replace(/œ/g, "oe").replace(/[^a-z0-9]/g, "");
+  return clean(name) + "|" + clean(address);
+}
+
+// A shared name or address alone cannot identify a venue.
+const venueIds = new Map();
+for (const place of places) {
+  for (const name of [place.name, ...(place.aliases ?? [])]) {
+    const key = venueKey(name, place.address);
+    if (!venueIds.has(key)) venueIds.set(key, place.id);
+    else if (venueIds.get(key) !== place.id) venueIds.set(key, null);
+  }
+}
+
+export function eventsForPlace(events, place, now = Date.now()) {
+  const dates = upcomingEvents(events, now)
+    .filter(({ place: venue }) => venueIds.get(venueKey(venue.name, venue.address)) === place.id)
+    .sort((a, b) => a.start_datetime - b.start_datetime);
+  const seen = new Set();
+  return dates.filter((event) => {
+    const key = event.slug + "|" + event.start_datetime;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export function agendaPool(events, now = Date.now()) {
+  const upcoming = upcomingEvents(events, now).filter((event) => /\b69007\b/u.test(event.place.address));
   const tonight = upcoming.filter(({ start_datetime }) => {
     const date = new Date(start_datetime * 1000);
-    return day.format(date) === day.format(now) && Number(hour.format(date)) >= 17;
+    const localHour = hour.formatToParts(date).find((part) => part.type === "hour").value;
+    return day.format(date) === day.format(now) && Number(localHour) >= 17;
   });
   return { events: tonight.length ? tonight : upcoming, tonight: !!tonight.length };
 }
@@ -41,7 +94,6 @@ export function mountAgenda(dialog) {
   const card = dialog.querySelector("#agenda-card");
   const link = dialog.querySelector("#agenda-event-link");
   const again = dialog.querySelector("#agenda-again");
-  let cached;
   let request;
   let pool = [];
   let seen = new Set();
@@ -60,7 +112,7 @@ export function mountAgenda(dialog) {
     );
     dialog.querySelector("#agenda-event-place").textContent =
       `${event.place.name} · ${event.place.address.replace(/\s+/g, " ").trim()}`;
-    link.href = `${source}/event/${encodeURIComponent(event.slug)}`;
+    link.href = eventUrl(event);
     link.dataset.slug = event.slug;
     card.hidden = false;
     again.hidden = pool.length < 2;
@@ -76,17 +128,9 @@ export function mountAgenda(dialog) {
     request = controller;
 
     try {
-      if (!cached || cached.expires <= Date.now()) {
-        const response = await fetch(`${source}/api/events`, {
-          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]),
-        });
-        if (!response.ok) throw new Error("Agenda indisponible");
-        const events = await response.json();
-        if (!Array.isArray(events)) throw new Error("Format d’agenda inattendu");
-        cached = { events, expires: Date.now() + 5 * 60 * 1000 };
-      }
+      const events = await loadAgenda();
       if (controller.signal.aborted) return;
-      const selection = agendaPool(cached.events);
+      const selection = agendaPool(events);
       pool = [...new Map(selection.events.map((event) => [event.slug, event])).values()];
       seen = new Set();
       if (!pool.length) {
