@@ -24,6 +24,7 @@ export function mountCabinetHud() {
   catalogue.textContent = "Adresses";
   catalogue.setAttribute("aria-expanded", "false");
   catalogue.setAttribute("aria-controls", "cabinet-directory");
+  catalogue.setAttribute("aria-haspopup", "dialog");
   const help = find("#help");
   help.textContent = "Aide";
   toolbar.append(back, catalogue, find("#sound"), find("#cabinet-agenda"));
@@ -59,23 +60,13 @@ export function mountCabinetHud() {
   wheelDetails.append(wheelSummary, find("#wheel-legend"));
   cabinet.after(wheelDetails);
 
-  const directory = find(".directory");
-  const directoryPanel = document.createElement("div");
-  directoryPanel.id = "cabinet-directory";
-  directoryPanel.hidden = true;
-  directoryPanel.append(directory);
-  wheelDetails.after(directoryPanel);
+  const directoryPanel = find("#cabinet-directory");
   catalogue.addEventListener("click", () => {
-    directoryPanel.hidden = !directoryPanel.hidden;
-    catalogue.setAttribute("aria-expanded", String(!directoryPanel.hidden));
-    if (!directoryPanel.hidden)
-      directoryPanel.scrollIntoView({
-        block: "nearest",
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
+    directoryPanel.showModal();
+    catalogue.setAttribute("aria-expanded", "true");
   });
+  directoryPanel.addEventListener("close", () => catalogue.setAttribute("aria-expanded", "false"));
+  find("#close-directory").onclick = () => directoryPanel.close();
 
   const counter = find(".session-stamp");
   counter.querySelector("span").textContent = "Tirages";
@@ -92,7 +83,7 @@ export function mountCabinetHud() {
   const sources = find("#sources");
   sources.textContent = "Sources";
   credits.append(signature, help, sources);
-  directoryPanel.after(credits);
+  wheelDetails.after(credits);
   find(".left-panel").remove();
   find(".right-panel").remove();
   find(".play-top").remove();
@@ -103,7 +94,7 @@ export function mountCabinetHud() {
       find("#hud-activity").textContent =
         category === "Tout" ? "Toutes les activités" : category;
       find("#hud-district").textContent = district;
-      find("#hud-eligible").textContent = eligible > 1 ? `${eligible} lieux éligibles` : `${eligible} lieu éligible`;
+      find("#hud-eligible").textContent = `${eligible} ${eligible > 1 ? "adresses" : "adresse"}`;
       filters.classList.toggle(
         "has-filters",
         category !== "Tout" ||
@@ -114,8 +105,7 @@ export function mountCabinetHud() {
     resetPanels() {
       filters.open = false;
       wheelDetails.open = false;
-      directoryPanel.hidden = true;
-      catalogue.setAttribute("aria-expanded", "false");
+      if (directoryPanel.open) directoryPanel.close();
     },
   };
 }

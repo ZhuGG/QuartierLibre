@@ -31,7 +31,7 @@ L’amplitude du levier modifie l’élan, la durée et le nombre de tours. Le r
 
 Les mouvements réduits du système sont respectés. En cas d’absence de WebGL, un affichage de secours conserve le tirage et les fiches. Aucune donnée personnelle, aucun compte, aucune API payante.
 
-Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dernier ticket sont intégrés à la borne. Le panneau Filtres s’ouvre à la demande ; le bouton Adresses affiche le catalogue sous les commandes. Sur mobile, la poignée et sa course restent à l’intérieur du meuble pour conserver son centrage. Les libellés fonctionnels utilisent une police plus lisible, tandis que les titres et les détails graphiques gardent le caractère pixel art.
+Les filtres, le catalogue d’adresses, les commandes audio, l’aide et le dernier ticket sont intégrés à la borne. Le panneau Filtres s’ouvre à la demande ; le bouton Adresses ouvre un carnet consultable sans modifier la roue. La recherche porte sur les adresses correspondant aux filtres de la borne. Sur mobile, la poignée et sa course restent à l’intérieur du meuble pour conserver son centrage. Les libellés fonctionnels utilisent une police plus lisible, tandis que les titres et les détails graphiques gardent le caractère pixel art.
 
 La carte OpenStreetMap se charge à l’ouverture du ticket. L’adresse du lieu est convertie en coordonnées par la Géoplateforme de l’IGN. En cas d’échec, le lien de recherche OpenStreetMap reste disponible.
 

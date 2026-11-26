@@ -106,7 +106,15 @@ $("#app").innerHTML = `
    <aside class="right-panel"><p class="eyebrow">CHOISIR LES LIEUX</p><label class="field-label" for="district">TON QUARTIER</label><select id="district"><option>${ALL_DISTRICTS}</option><option>Tout le 7e</option><option>Guillotière</option><option>Jean Macé</option><option>Gerland</option><option>Blandan</option><option>Rancy · Lyon 3e</option></select><span class="field-label">TON ENVIE</span><div id="categories" class="category-list"></div><button id="favorites-only" class="favorite-filter" aria-pressed="false">☆ Mes favoris</button><div class="next-ticket"><span>DERNIER TICKET</span><p id="last-ticket">Aucun tirage pour le moment.</p><button id="show-last" class="text-button" hidden>REVOIR LE LIEU ↗</button></div></aside></div>
    <button type="button" id="cabinet-agenda" data-agenda>Ville Morte</button>
    <p class="keyboard-note">CLAVIER : <kbd>ESPACE</kbd> ABAISSER / RELÂCHER <span>·</span> <kbd>←</kbd> <kbd>→</kbd> CHANGER D’ENVIE</p>
-   <section class="directory" aria-labelledby="directory-title"><div class="directory-heading"><div><p class="eyebrow">LE CARNET DU 7e</p><h2 id="directory-title">Les lieux de la sélection.</h2></div><label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Un nom, une rue…" maxlength="100"><span aria-hidden="true">⌕</span></label></div><p id="directory-count" aria-live="polite"></p><div id="place-list" class="place-list"></div><p class="source-note">Sélection initiale, non exhaustive · sources indiquées sur les fiches. Jour / nuit indique une ambiance, pas une ouverture en temps réel. Horaires, entrée et programmation à vérifier auprès des lieux.</p></section>
+   <dialog id="cabinet-directory" aria-labelledby="directory-title">
+     <header class="directory-heading">
+       <h2 id="directory-title" tabindex="-1" autofocus>Carnet d’adresses</h2>
+       <button type="button" id="close-directory" aria-label="Fermer le carnet">×</button>
+       <label class="search"><span class="sr-only">Chercher un lieu</span><input id="search" type="search" placeholder="Nom, rue ou activité…" maxlength="100"></label>
+       <p id="directory-count" aria-live="polite"></p>
+     </header>
+     <div id="place-list" class="place-list"></div>
+   </dialog>
   </section>
  </main><footer><span>QUARTIER LIBRE — SOLEIL / LUNE</span><span>UNE SÉLECTION DU 7e ARRONDISSEMENT</span><button id="sources" class="text-button">À PROPOS & SOURCES ↗</button></footer>
  <dialog id="result" class="result" aria-labelledby="result-title">
@@ -123,12 +131,12 @@ $("#app").innerHTML = `
     <button id="compare-draw" type="button"></button>
    </div>
    <section id="ticket-agenda" aria-label="Programmation du lieu" hidden></section>
+   <p id="result-description"></p>
    <section id="ticket-map" class="ticket-map" aria-label="Carte du lieu">
     <p id="map-status" role="status"></p>
     <div id="map-frame"></div>
     <a id="osm-link" target="_blank" rel="noopener noreferrer">Ouvrir dans OpenStreetMap</a>
    </section>
-   <p id="result-description"></p>
    <div class="ticket-secondary">
     <a id="official" target="_blank" rel="noopener noreferrer">Infos du lieu</a>
     <button id="favorite-result" type="button" class="text-button"></button>
@@ -180,12 +188,12 @@ const wheel = new ArcadeWheel($("#wheel"), {
   },
   onDone: (i) => reveal(activePool[i]),
 });
-function filtered() {
+function filtered(search = "") {
   return filterPlaces(places, {
     mode,
     category,
     district,
-    query,
+    query: search,
     favorites: favoritesOnly ? favorites : null,
   });
 }
@@ -257,9 +265,10 @@ function refresh() {
   renderDirectory();
 }
 function renderDirectory() {
-  const list = filtered();
+  const list = filtered(query);
   $("#directory-count").textContent =
-    `${list.length} adresse${list.length !== 1 ? "s" : ""} · ${mode === "sun" ? "En journée" : "En soirée"}${favoritesOnly ? " · Favoris" : ""}`;
+    [`${list.length} adresse${list.length > 1 ? "s" : ""}`, mode === "sun" ? "Soleil" : "Lune",
+      district, category === "Tout" ? "" : category, favoritesOnly ? "Favoris" : ""].filter(Boolean).join(" · ");
   $("#place-list").innerHTML = list.length
     ? list
         .map(
@@ -267,7 +276,7 @@ function renderDirectory() {
             `<article class="place"><div class="place-meta">${escape(p.district)} <span>${escape(p.category)}</span></div><button class="place-title" data-open="${p.id}">${escape(p.name)} <span>↗</span></button><p>${escape(p.address)}</p>${p.available === false ? '<small class="unavailable">Statut à revérifier · hors tirages</small>' : ""}<button class="place-favorite" data-favorite="${p.id}" aria-label="${favorites.includes(p.id) ? "Retirer" : "Ajouter"} ${escape(p.name)} ${favorites.includes(p.id) ? "des" : "aux"} favoris" aria-pressed="${favorites.includes(p.id)}">${favorites.includes(p.id) ? "★" : "☆"}</button></article>`,
         )
         .join("")
-    : '<div class="empty"><h3>Aucune adresse pour cette combinaison.</h3><p>Change ton envie ou réinitialise les filtres avec RESET.</p></div>';
+    : `<div class="empty"><h3>Aucune adresse trouvée</h3><button type="button" data-clear-directory>${query ? "Effacer la recherche" : "Réinitialiser les filtres"}</button></div>`;
 }
 function chooseMode(value) {
   if (spinning) return;
@@ -490,12 +499,23 @@ function toggleFavorite(id) {
     ? favorites.filter((x) => x !== id)
     : [...favorites, id];
   storage.set("sl-favorites", favorites);
-  renderDirectory();
+  if (favoritesOnly) {
+    renderDirectory();
+  } else {
+    const star = document.querySelector(`[data-favorite="${CSS.escape(id)}"]`);
+    if (star) {
+      const saved = favorites.includes(id);
+      const name = places.find((place) => place.id === id).name;
+      star.textContent = saved ? "★" : "☆";
+      star.setAttribute("aria-pressed", String(saved));
+      star.setAttribute("aria-label", saved ? `Retirer ${name} des favoris` : `Ajouter ${name} aux favoris`);
+    }
+  }
   if (lastResult)
     $("#favorite-result").textContent = favorites.includes(lastResult.id)
       ? "Retirer des favoris"
       : "Ajouter aux favoris";
-  if (!spinning) refreshPool();
+  if (!spinning && favoritesOnly) refreshPool();
   if (lastResult) $("#again").disabled = !hasAlternative(lastResult);
 }
 function closeResult() {
@@ -617,8 +637,8 @@ $("#district").onchange = (e) => {
 };
 $("#search").oninput = (e) => {
   query = e.target.value;
-  refreshPool();
   renderDirectory();
+  $("#place-list").scrollTop = 0;
 };
 $("#favorites-only").onclick = () => {
   favoritesOnly = !favoritesOnly;
@@ -626,9 +646,21 @@ $("#favorites-only").onclick = () => {
   refresh();
 };
 $("#place-list").onclick = (e) => {
+  if (e.target.closest("[data-clear-directory]")) {
+    if (query) {
+      query = "";
+      $("#search").value = "";
+      renderDirectory();
+    } else reset();
+    $("#search").focus();
+    return;
+  }
   const f = e.target.closest("[data-favorite]"),
     b = e.target.closest("[data-open]");
-  if (f) toggleFavorite(f.dataset.favorite);
+  if (f) {
+    toggleFavorite(f.dataset.favorite);
+    (document.querySelector(`[data-favorite="${CSS.escape(f.dataset.favorite)}"]`) || $("#search")).focus({ preventScroll: true });
+  }
   if (b) openPlace(places.find((p) => p.id === b.dataset.open));
 };
 $("#favorite-result").onclick = () => toggleFavorite(lastResult.id);
@@ -638,12 +670,20 @@ result.addEventListener("close", () => {
   result.getAnimations().forEach((animation) => animation.cancel());
   ticketMap.clear();
   ticketAgenda.clear();
-  previousFocus?.focus({ preventScroll: true });
+  const opener = previousFocus?.isConnected ? previousFocus : $("#cabinet-directory").open
+    ? (document.querySelector(`[data-open="${CSS.escape(lastResult.id)}"]`) || $("#search"))
+    : lever;
+  opener?.focus({ preventScroll: true });
 });
 $("#again").onclick = () => {
   if (!lastResult || spinning || !hasAlternative(lastResult)) return;
   keptTicket = lastResult;
   closeResult();
+  if ($("#cabinet-directory").open) {
+    $("#cabinet-directory").close();
+    previousFocus = lever;
+    lever.scrollIntoView({ block: "center", behavior: "instant" });
+  }
   refreshPool({ exclude: keptTicket.id });
   launch();
 };
