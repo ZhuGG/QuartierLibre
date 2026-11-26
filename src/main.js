@@ -85,6 +85,8 @@ const sparkTracks = Array.from({ length: 10 }, (_, i) => {
 }).join("");
 
 const sound = new Sound();
+const lampRail = Array.from({ length: 8 }, (_, index) =>
+  `<i style="--lamp:${index}"></i>`).join("");
 sound.enabled = storage.get("sl-sound", false) === true;
 
 $("#app").innerHTML = `
@@ -99,7 +101,7 @@ $("#app").innerHTML = `
   <section id="play" class="play" hidden aria-label="La borne de sorties"><div class="play-top"><button id="back" class="text-button">← CHANGER DE BORNE</button><span class="play-top-note">GUILLOTIÈRE · JEAN MACÉ · GERLAND</span></div>
    <div class="game-layout"><aside class="left-panel"><p class="eyebrow">COMMENT JOUER</p><h2>Tire le levier.</h2><ol><li>Choisis ton envie.</li><li>Tire le levier vers le bas.</li><li>Relâche pour lancer.</li></ol><p class="side-note">Six lieux au maximum par tour.<br>Les derniers tirages sont écartés.</p><div class="session-stamp"><span>TIRAGES</span><strong id="session-count">${String(count).padStart(2, "0")}</strong></div></aside>
    <article id="cabinet" class="cabinet" aria-labelledby="machine-title"><div class="cabinet-roof"><span class="roof-serial">QL–07 / <span id="serial-mode">S</span></span><span class="roof-lights" aria-hidden="true">▪ ▪ ▪ ▪ ▪</span></div><div class="marquee"><i class="screw" aria-hidden="true"></i><div><span id="machine-kicker">JOURNÉE / LYON 7e</span><h2 id="machine-title">SOLEIL</h2></div><span id="machine-icon" class="marquee-icon" aria-hidden="true">☀</span><i class="screw" aria-hidden="true"></i></div>
-    <div class="screen-bezel"><div class="bezel-lamp bezel-lamp-left" aria-hidden="true"></div><div class="bezel-lamp bezel-lamp-right" aria-hidden="true"></div><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="wheel-effects" aria-hidden="true"><div class="wheel-sparks">${sparkTracks}</div></div><div class="scanlines" aria-hidden="true"></div></div></div>
+    <div class="screen-bezel"><div class="bezel-lamp bezel-lamp-left" aria-hidden="true">${lampRail}</div><div class="bezel-lamp bezel-lamp-right" aria-hidden="true">${lampRail}</div><div class="screen"><div class="screen-top"><span><i class="status-led"></i><span id="screen-status">PRÊT À SORTIR</span></span><span id="pool-count"></span></div><div id="wheel" class="wheel" aria-label="Roue 3D des lieux de sortie"></div><div class="screen-bottom"><span id="screen-hint">TIRE LE LEVIER POUR LANCER.</span><span class="blink" aria-hidden="true">▮</span></div><div class="wheel-effects" aria-hidden="true"><div class="wheel-sparks">${sparkTracks}</div></div><div class="scanlines" aria-hidden="true"></div></div></div>
     <ol id="wheel-legend" class="wheel-legend" aria-label="Les lieux de la roue"></ol><div class="control-deck"><span class="deck-trace deck-trace-input" aria-hidden="true"></span><span class="deck-trace deck-trace-output" aria-hidden="true"></span><div class="activity-control"><button id="joystick" class="activity-dial" aria-label="Changer d’activité"><span class="dial-face" aria-hidden="true"></span></button><span id="activity-label" aria-live="polite">Tout</span></div><div class="launch-area"><div class="power-track" role="meter" aria-label="Puissance du lancer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power"></span></div><button id="launch" class="slot-lever" aria-label="Tirer le levier pour lancer la roue"><span class="lever-mount" aria-hidden="true"></span><span class="lever-arm" aria-hidden="true"><span class="lever-ball"></span></span></button><span id="lever-caption" class="lever-caption">ÉLAN</span><span class="button-caption">OU MAINTIENS ESPACE</span></div><button id="reroll" class="reroll-button" aria-label="Changer les lieux de la roue"><span aria-hidden="true">↻</span><b>AUTRES<br>LIEUX</b></button><button id="reset-filter" class="small-arcade" aria-label="Réinitialiser les filtres"><span></span>RESET</button></div>
     <div class="neighborhood-strip" aria-hidden="true"></div><div class="cabinet-front"><div class="speaker" aria-hidden="true"></div><div class="ticket-slot" aria-hidden="true"><i class="printer-led"></i><div class="printer-feed"><div class="printer-paper"><b id="print-place"></b><i></i></div></div></div><div class="cabinet-sticker">GUILLO<br>69007</div><div class="front-bottom"><span>QUARTIER LIBRE · LYON 7e</span><span>FREE PLAY</span></div></div><div class="cabinet-foot" aria-hidden="true"></div>
    </article>
@@ -125,6 +127,7 @@ $("#app").innerHTML = `
     <h2 id="result-title" tabindex="-1" autofocus></h2>
     <p id="result-category"></p>
     <address id="result-address"></address>
+    <button id="favorite-result" type="button" aria-pressed="false"></button>
    </header>
    <div id="ticket-compare" class="ticket-compare" aria-label="Comparer les tickets" hidden>
     <button id="compare-kept" type="button"></button>
@@ -139,7 +142,6 @@ $("#app").innerHTML = `
    </section>
    <div class="ticket-secondary">
     <a id="official" target="_blank" rel="noopener noreferrer">Infos du lieu</a>
-    <button id="favorite-result" type="button" class="text-button"></button>
    </div>
    <p id="result-note" class="result-note"></p>
    <section class="detour" aria-label="Découvrir les environs">
@@ -455,25 +457,30 @@ function openPlace(p, won = false, paper = null) {
     p.available === false
       ? "Statut à revérifier. Ce lieu est exclu des tirages."
       : "Vérifie les horaires et la programmation avant de partir.";
-  $("#favorite-result").textContent = favorites.includes(p.id)
-    ? "Retirer des favoris"
-    : "Ajouter aux favoris";
+  updateFavoriteButton(p);
   ticketBody.scrollTop = 0;
   if (!result.open) {
     result.showModal();
-    if (!reducedMotion.matches && paper) {
+    if (reducedMotion.matches) return;
+    if (paper) {
       const ticket = result.getBoundingClientRect();
       const x = paper.left + (paper.width - ticket.width) / 2 - ticket.left;
       const y = paper.top - ticket.top;
-      const scale = paper.width / ticket.width;
+      const scaleX = paper.width / ticket.width;
+      const scaleY = paper.height / ticket.height;
       result.animate([
-        { transform: `translate(${x}px, ${y}px) rotate(-6deg) scale(${scale})` },
+        { transform: `translate(${x}px, ${y}px) rotate(2deg) scale(${scaleX}, ${scaleY})`,
+          easing: "cubic-bezier(.35,0,.5,1)" },
         {
-          transform: `translate(${x * 0.20}px, ${y * 0.23 - 17}px) rotate(1.7deg) scale(.78)`,
-          offset: 0.61,
+          transform: `translate(${x * .65}px, ${y * .65 - 8}px) perspective(850px) rotateX(-14deg) rotate(-3deg) scale(.36,.29)`,
+          offset: .36, easing: "cubic-bezier(.2,.75,.25,1)",
         },
-        { transform: "none" },
-      ], { duration: 580, easing: "cubic-bezier(.18,.7,.24,1)" });
+        { transform: "translateY(-3px) perspective(850px) rotateX(1deg) rotate(.35deg)", offset: .84 },
+        { transform: "none" }
+      ], { duration: 610 });
+    } else {
+      result.animate([{ opacity: .6, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: 150, easing: "ease-out" });
     }
   }
 }
@@ -494,6 +501,12 @@ function updateTicketComparison(place) {
     button.setAttribute("aria-pressed", String(pair[index].id === place.id));
   });
 }
+function updateFavoriteButton(place) {
+  const saved = favorites.includes(place.id);
+  const button = $("#favorite-result");
+  button.textContent = saved ? "★ Dans mes favoris" : "☆ Ajouter aux favoris";
+  button.setAttribute("aria-pressed", String(saved));
+}
 function toggleFavorite(id) {
   favorites = favorites.includes(id)
     ? favorites.filter((x) => x !== id)
@@ -511,10 +524,7 @@ function toggleFavorite(id) {
       star.setAttribute("aria-label", saved ? `Retirer ${name} des favoris` : `Ajouter ${name} aux favoris`);
     }
   }
-  if (lastResult)
-    $("#favorite-result").textContent = favorites.includes(lastResult.id)
-      ? "Retirer des favoris"
-      : "Ajouter aux favoris";
+  if (lastResult) updateFavoriteButton(lastResult);
   if (!spinning && favoritesOnly) refreshPool();
   if (lastResult) $("#again").disabled = !hasAlternative(lastResult);
 }

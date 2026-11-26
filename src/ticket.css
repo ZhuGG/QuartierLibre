@@ -36,6 +36,15 @@
   overflow: hidden;
   visibility: hidden;
   pointer-events: none;
+  perspective: 160px;
+}
+
+.printer-feed::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(#120f10b0, transparent);
 }
 
 .printing .printer-feed {
@@ -48,6 +57,7 @@
   padding: 8px 3px 4px;
   color: var(--print-ink);
   background:
+    url("./paper-grain.png"), linear-gradient(108deg, transparent 42%, #26180420 53%, #fff8 54%, transparent 61%),
     linear-gradient(#20130679, transparent 16%, transparent 74%, #f8fbfd6b),
     repeating-linear-gradient(0deg, #21243108 0 1px, transparent 1px 3px),
     var(--print-paper);
@@ -89,12 +99,12 @@
 }
 
 @keyframes paper-feed {
-  0% { transform: translateY(-105%); }
-  18%, 28% { transform: translateY(-73%); }
-  45%, 53% { transform: translateY(-48%); }
-  72%, 81% { transform: translateY(-23%); }
-  95% { transform: translateY(1px) rotate(-1.4deg); }
-  100% { transform: translateY(0); }
+  0% { transform: translateY(-105%) rotateX(-22deg); }
+  20%, 29% { transform: translateY(-68%) rotateX(14deg); }
+  51%, 58% { transform: translateY(-39%) rotateX(6deg); }
+  78% { transform: translateY(-10%) rotateX(16deg); }
+  90% { transform: translateY(-3%) rotate(-1deg); }
+  100% { transform: translateY(2px) rotate(2deg); }
 }
 
 .result {
@@ -106,16 +116,25 @@
   width: min(466px, calc(100% - 24px));
   max-height: min(88dvh, 760px);
   overflow: hidden;
-  border-block: 6px solid transparent;
+  padding-block: 6px 9px;
   background:
-    linear-gradient(135deg, transparent 50%, var(--ticket-paper) 50%) 0 0 / 8px 6px repeat-x border-box,
-    linear-gradient(225deg, transparent 50%, var(--ticket-paper) 50%) 4px 0 / 8px 6px repeat-x border-box,
-    linear-gradient(45deg, transparent 50%, var(--ticket-fold) 50%) 0 100% / 8px 6px repeat-x border-box,
-    linear-gradient(315deg, transparent 50%, var(--ticket-fold) 50%) 4px 100% / 8px 6px repeat-x border-box;
-  background-color: transparent;
+    url("./paper-grain.png"),
+    linear-gradient(162deg, transparent 31%, #36291c0b 38%, #fff6 38.2%, transparent 40%),
+    linear-gradient(99deg, transparent 59%, #31251e0d 67%, #fffa 67.3%, transparent 69%),
+    linear-gradient(12deg, var(--ticket-fold), var(--ticket-paper) 32% 86%, var(--ticket-fold));
+  /* A nick in the top edge and a sloping tear where the slip left the roll. */
+  clip-path: polygon(0 3px, 8% 2px, 13% 4px, 16% 2px, 30% 3px, 31% 6px, 32% 2px,
+    51% 1px, 71% 3px, 85% 1px, 100% 2px, 100% calc(100% - 8px),
+    97% calc(100% - 5px), 94% calc(100% - 6px), 92% calc(100% - 3px),
+    86% calc(100% - 5px), 81% calc(100% - 3px), 78% calc(100% - 5px),
+    74% calc(100% - 2px), 68% calc(100% - 4px), 64% 100%, 60% calc(100% - 3px),
+    53% calc(100% - 2px), 50% calc(100% - 6px), 48% calc(100% - 3px),
+    39% calc(100% - 5px), 32% calc(100% - 3px), 27% calc(100% - 6px),
+    21% calc(100% - 4px), 17% calc(100% - 7px), 11% calc(100% - 5px),
+    7% calc(100% - 8px), 3% calc(100% - 7px), 0 calc(100% - 10px));
   color: var(--ticket-ink);
   transform-origin: top center;
-  box-shadow: 0 25px 70px #02071270;
+  box-shadow: none;
 }
 
 body[data-mode="moon"] .result {
@@ -147,25 +166,37 @@ body[data-mode="moon"] .result {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 16px clamp(14px, 4.8vw, 27px) 14px;
-  background:
-    repeating-linear-gradient(0deg, #352c2107 0 1px, transparent 1px 4px),
-    linear-gradient(111deg, var(--ticket-fold), transparent 22% 85%, var(--ticket-fold)),
-    var(--ticket-paper);
   font: 400 .94rem/1.45 system-ui, sans-serif;
   scrollbar-color: var(--ticket-rule) var(--ticket-paper);
 }
 
 .ticket-head {
-  border-block: 1px dashed var(--ticket-rule);
+  border-bottom: 1px dashed var(--ticket-rule);
   padding: 12px 0 13px;
 }
 
 .ticket-body #result-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 42px 7px 0;
   color: var(--ticket-accent);
   font: 750 .75rem/1.3 "Courier New", monospace;
   text-transform: uppercase;
   letter-spacing: .095em;
+}
+
+.ticket-body #result-label::before {
+  content: "";
+  flex: none;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: radial-gradient(circle, currentColor 0 39%, var(--ticket-paper) 41% 53%, transparent 55%),
+    repeating-conic-gradient(currentColor 0deg 12deg, transparent 12deg 45deg);
+}
+body[data-mode="moon"] #result-label::before {
+  background: radial-gradient(circle at 72% 31%, transparent 0 47%, currentColor 49%);
 }
 
 .ticket-body h2 {
@@ -181,6 +212,11 @@ body[data-mode="moon"] .result {
   font-size: .88rem;
 }
 
+/* The title receives reading focus when the dialog opens. */
+#result-title:focus {
+  outline: none;
+}
+
 #result-category {
   color: var(--ticket-accent);
   font-weight: 720;
@@ -188,6 +224,23 @@ body[data-mode="moon"] .result {
 
 #result-address {
   font-style: normal;
+}
+
+#favorite-result {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--ticket-paper);
+  color: var(--ticket-accent);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font: 650 .88rem/1.3 system-ui, sans-serif;
+}
+#favorite-result[aria-pressed="true"] {
+  background: var(--ticket-accent);
+  color: var(--ticket-paper);
 }
 
 .ticket-links,
@@ -201,8 +254,7 @@ body[data-mode="moon"] .result {
   z-index: 1;
   border-top: 1px dashed var(--ticket-rule);
   padding: 10px clamp(14px, 4.8vw, 27px) 11px;
-  background: linear-gradient(180deg, var(--ticket-paper), var(--ticket-fold));
-  box-shadow: 0 -5px 15px #15252c14;
+  background: linear-gradient(#fff2, transparent);
 }
 
 .ticket-compare {
@@ -377,7 +429,7 @@ body[data-mode="moon"] .result {
 
 @media (max-width: 600px) {
   .result {
-    margin: auto auto 0;
+    margin: auto auto 6px;
     width: calc(100% - 12px);
     max-height: 92dvh;
   }

@@ -178,8 +178,15 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   min-height: 44px;
   max-width: 100%;
 }
-.filter-panel #favorites-only {
-  align-self: end;
+.filter-bar { position: relative; }
+.filter-bar .cabinet-filters > summary { padding-right: 105px; min-height: 56px; }
+.filter-bar #favorites-only {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   background: #203a43;
   color: #e9dfbd;
@@ -192,7 +199,7 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   padding: 10px 12px;
   width: auto;
 }
-.filter-panel #favorites-only[aria-pressed="true"] {
+.filter-bar #favorites-only[aria-pressed="true"] {
   background: #ddc994;
   color: #152d36;
 }
@@ -818,7 +825,7 @@ body.cabinet-hud:not([data-mode="choose"]) footer {
   .filter-panel #district {
     font-size: 14px;
   }
-  .filter-panel #favorites-only {
+  .filter-bar #favorites-only {
     font-size: 13px;
     padding: 9px 11px;
   }
@@ -1838,68 +1845,73 @@ body:has(.spinning) .bay-dust::after {
   position: relative;
 }
 
+/* Turned bezels and domed lenses. Index zero sits beside the control deck. */
+.cabinet-hud .screen-bezel { padding-inline: clamp(18px, 3.6vw, 25px); }
 .bezel-lamp {
+  --hue-start: 7;
+  --hue-step: 6;
   position: absolute;
   z-index: 2;
+  inset-block: 10%;
+  width: clamp(12px, 2.5vw, 17px);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: space-around;
+  perspective: 160px;
   pointer-events: none;
-  top: 18%;
-  bottom: 16%;
-  width: 3px;
-  border-radius: 1px;
-  background: #09151a;
-  overflow: hidden;
 }
-
-.bezel-lamp-left {
-  left: 7px;
+[data-mode="moon"] .bezel-lamp { --hue-start: 179; --hue-step: 13; }
+.bezel-lamp-left { left: 2px; }
+.bezel-lamp-right { right: 2px; }
+.bezel-lamp i {
+  --hue: calc(var(--hue-start) + var(--lamp) * var(--hue-step));
+  --glass: hsl(var(--hue) 92% 56%);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #b0b4ad, #373f49 35%, #101923 62%, #737c7b);
+  box-shadow: 0 1px 2px #050a11, inset 0 0 0 1px #131923;
+  transform-style: preserve-3d;
 }
-
-.bezel-lamp-right {
-  right: 7px;
-}
-
-.bezel-lamp::before {
+.bezel-lamp i::before, .bezel-lamp i::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to top, var(--machine-lamp) 0 6px, transparent 6px 9px
-  );
-  opacity: 0.19;
-  transform: scaleY(0.11);
-  transform-origin: bottom;
+  inset: 15%;
+  border-radius: inherit;
+  transform: translateZ(1px);
+  background: radial-gradient(ellipse at 32% 24%, #fff9df 0 6%, transparent 21%),
+    radial-gradient(circle at 42% 36%, var(--glass), hsl(var(--hue) 80% 26%) 63%, #111720 95%);
 }
-
-.charging .bezel-lamp::before {
-  opacity: 0.86;
-  transform: scaleY(max(0.11, var(--charge, 0)));
+.bezel-lamp i::after {
+  transform: translateZ(2px);
+  background: radial-gradient(ellipse at 33% 23%, white 0 7%, transparent 26%),
+    radial-gradient(circle at 45% 45%, #fffae4, var(--glass) 49%, hsl(var(--hue) 85% 31%) 88%);
+  box-shadow: 0 0 5px 1px var(--glass);
+  opacity: 0;
 }
-
-.spinning:not(.braking, .has-winner) .bezel-lamp::before {
-  opacity: 0.72;
-  transform: scaleY(1);
-  animation: rail-ignite 570ms ease-out both;
+.charging .bezel-lamp i::after {
+  opacity: clamp(0, calc(var(--charge, 0) * 8 - var(--lamp)), 1);
 }
-
-.braking .bezel-lamp::before {
-  opacity: 0.76;
-  transform: scaleY(0.29);
-  animation: rail-brake 620ms ease-out both;
-}
-
-.has-winner .bezel-lamp::before {
-  opacity: 0.82;
-  transform: scaleY(0.19);
-}
-
-@keyframes rail-ignite {
-  from { transform: scaleY(0.1); }
-  to { transform: scaleY(1); }
-}
-
-@keyframes rail-brake {
-  from { transform: scaleY(1); }
-  to { transform: scaleY(0.29); }
+.spinning .bezel-lamp i::after,
+.has-winner .bezel-lamp i::after { opacity: .72; }
+@media (prefers-reduced-motion: no-preference) {
+  .bezel-lamp i::after { transition: opacity 100ms ease-out; }
+  .spinning:not(.has-winner) .bezel-lamp i::after {
+    animation: lens-wave 840ms ease-in-out infinite;
+    animation-delay: calc(var(--lamp) * 86ms - 840ms);
+  }
+  .spinning.braking .bezel-lamp i::after { animation-duration: 1.5s; }
+  .changing-activity .bezel-lamp i::after,
+  .renewing .bezel-lamp i::after { animation: lens-wave 280ms calc(var(--lamp) * 23ms) both; }
+  .printing .bezel-lamp i::after {
+    animation: lens-wave 380ms calc((7 - var(--lamp)) * 42ms) both;
+  }
+  @keyframes lens-wave {
+    0%, 100% { opacity: .12; }
+    45% { opacity: 1; }
+  }
 }
 
 .cabinet-hud .screen-top .status-led {
@@ -2231,21 +2243,6 @@ body:has(.spinning) .bay-dust::after {
   opacity: .96;
 }
 
-.cabinet-hud .bezel-lamp {
-  width: 5px;
-  border: 1px solid #080a14;
-  border-radius: 2px;
-  background: repeating-linear-gradient(transparent 0 5px, #070d18 5px 7px), var(--steel-body);
-}
-
-.cabinet-hud .bezel-lamp::before {
-  background: repeating-linear-gradient(to top,
-    var(--machine-signal) 0 2px, var(--machine-lamp) 2px 6px, transparent 6px 9px);
-}
-
-.cabinet-hud .cabinet:is(.charging, .spinning, .printing) .bezel-lamp {
-  box-shadow: 0 0 13px rgba(var(--glow-rgb), .38);
-}
 
 .cabinet-hud .wheel {
   isolation: isolate;
@@ -2346,15 +2343,6 @@ body:has(.spinning) .bay-dust::after {
   animation: deck-to-wheel 510ms ease-out both;
 }
 
-.cabinet-hud .spinning:not(.braking, .has-winner) .bezel-lamp::before {
-  animation: rail-ignite 510ms 150ms ease-out both;
-  opacity: var(--launch-signal, 0.72);
-}
-
-.cabinet-hud .printing .bezel-lamp::before {
-  transform-origin: top;
-  animation: rail-to-deck calc(var(--print-transfer) * 0.63) ease-in both;
-}
 
 .cabinet-hud .printing .deck-trace-output::after {
   animation: deck-to-printer calc(var(--print-transfer) * 0.67) calc(var(--print-transfer) * 0.33) ease-out both;
@@ -2375,11 +2363,6 @@ body:has(.spinning) .bay-dust::after {
   100% { transform: translateX(-47%); opacity: 0; }
 }
 
-@keyframes rail-to-deck {
-  0% { transform: scaleY(0.24); opacity: 0.9; }
-  82% { transform: scaleY(1); opacity: 0.86; }
-  100% { transform: scaleY(1); opacity: 0.23; }
-}
 
 @keyframes deck-to-printer {
   0% { transform: translateX(46%); opacity: 0; }

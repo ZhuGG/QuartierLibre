@@ -44,8 +44,11 @@ export function mountCabinetHud() {
   const reset = find("#reset-filter");
   reset.className = "panel-key reset-key";
   reset.textContent = "Réinitialiser";
-  panel.append(districtLabel, favorites, find("#categories"), reset);
-  toolbar.after(filters);
+  panel.append(districtLabel, find("#categories"), reset);
+  const filterBar = document.createElement("div");
+  filterBar.className = "filter-bar";
+  filterBar.append(filters, favorites);
+  toolbar.after(filterBar);
 
   const dock = document.createElement("div");
   dock.className = "lever-dock";
